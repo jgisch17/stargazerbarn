@@ -1736,6 +1736,7 @@ function renderCampaignTargetingTab() {
             return {
                 roas: r.spend>0 ? (r.sales/r.spend).toFixed(2) : '0.00',
                 cac:  r.purchases>0 ? (r.spend/r.purchases).toFixed(2) : '0.00',
+                cpc:  r.clicks>0 ? (r.spend/r.clicks).toFixed(2) : '0.00',
                 ctr:  r.impressions>0 ? (r.clicks/r.impressions*100).toFixed(2) : '0.00',
                 cvr:  r.clicks>0 ? (r.purchases/r.clicks*100).toFixed(2) : '0.00'
             };
@@ -1757,7 +1758,7 @@ function renderCampaignTargetingTab() {
         totalsRow.style.cssText = 'font-weight:bold;background:#f0f4ff;';
         totalsRow.innerHTML = `<td></td><td>TOTALS</td>
             <td>${fmt$(totals.spend)}</td><td>${fmt$(totals.sales)}</td>
-            <td>${tm.roas}x</td><td>$${tm.cac}</td><td>${totals.purchases.toLocaleString()}</td>
+            <td>${tm.roas}x</td><td>$${tm.cac}</td><td>$${tm.cpc}</td><td>${totals.purchases.toLocaleString()}</td>
             <td>${totals.clicks.toLocaleString()}</td><td>${totals.impressions.toLocaleString()}</td>
             <td>${tm.ctr}%</td><td>${tm.cvr}%</td>`;
         tbody.appendChild(totalsRow);
@@ -1778,7 +1779,7 @@ function renderCampaignTargetingTab() {
                 </td>
                 <td style="padding-left:8px;">${grp.group}</td>
                 <td>${fmt$(grp.spend)}</td><td>${fmt$(grp.sales)}</td>
-                <td>${m.roas}x</td><td>$${m.cac}</td><td>${grp.purchases.toLocaleString()}</td>
+                <td>${m.roas}x</td><td>$${m.cac}</td><td>$${m.cpc}</td><td>${grp.purchases.toLocaleString()}</td>
                 <td>${grp.clicks.toLocaleString()}</td><td>${grp.impressions.toLocaleString()}</td>
                 <td>${m.ctr}%</td><td>${m.cvr}%</td>`;
             tr.onclick = () => toggleCampaignExpand(gi);
@@ -1806,7 +1807,7 @@ function renderCampaignTargetingTab() {
                         ${st.strategy}
                     </td>
                     <td>${fmt$(st.spend)}</td><td>${fmt$(st.sales)}</td>
-                    <td>${sm.roas}x</td><td>$${sm.cac}</td><td>${st.purchases.toLocaleString()}</td>
+                    <td>${sm.roas}x</td><td>$${sm.cac}</td><td>$${sm.cpc}</td><td>${st.purchases.toLocaleString()}</td>
                     <td>${st.clicks.toLocaleString()}</td><td>${st.impressions.toLocaleString()}</td>
                     <td>${sm.ctr}%</td><td>${sm.cvr}%</td>`;
                 innerTable.appendChild(innerTr);
