@@ -338,6 +338,75 @@
                 flex-wrap: wrap;
             }
         }
+        /* ── Insights Tab ──────────────────────────────────────────── */
+        .insights-container { display:flex; flex-direction:column; gap:24px; }
+        .insight-period-badge {
+            background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+            color:white; padding:14px 22px; border-radius:10px;
+            font-size:13px; display:flex; align-items:center; gap:10px;
+            font-weight:500; box-shadow:0 2px 8px rgba(102,126,234,.25);
+        }
+        .insight-section {
+            background:white; border-radius:12px;
+            box-shadow:0 2px 8px rgba(0,0,0,.08); overflow:hidden;
+        }
+        .insight-section-header {
+            padding:14px 22px; font-size:14px; font-weight:700;
+            display:flex; align-items:center; gap:8px; border-bottom:1px solid #f0f0f0;
+        }
+        .insight-section-body { padding:20px 22px; }
+        .exec-summary-text { font-size:14px; line-height:1.8; color:#333; }
+        .insight-two-col { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+        .insight-bullet-list { display:flex; flex-direction:column; gap:10px; }
+        .insight-bullet {
+            display:flex; gap:12px; align-items:flex-start;
+            padding:12px 14px; border-radius:8px; font-size:13px; line-height:1.5;
+        }
+        .insight-bullet-icon { font-size:15px; flex-shrink:0; margin-top:1px; }
+        .insight-bullet-label { font-weight:600; margin-bottom:2px; color:#222; }
+        .insight-bullet-detail { color:#666; font-size:12px; }
+        .bullet-working   { background:#f0fdf4; border-left:3px solid #22c55e; }
+        .bullet-notworking{ background:#fff7f7; border-left:3px solid #ef4444; }
+        .opp-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:14px; }
+        .opp-card { background:#f8f9ff; border:1px solid #e0e8ff; border-radius:10px; padding:16px; }
+        .opp-card-title  { font-size:13px; font-weight:700; color:#667eea; margin-bottom:6px; }
+        .opp-card-body   { font-size:12.5px; color:#555; line-height:1.55; }
+        .opp-card-metric { margin-top:8px; font-size:11px; color:#888; font-style:italic; }
+        .swot-grid {
+            display:grid; grid-template-columns:1fr 1fr;
+            border-top:1px solid #e8e8e8;
+        }
+        .swot-quadrant { padding:20px 22px; min-height:160px; }
+        .swot-quadrant:nth-child(1){ border-right:1px solid #e0e0e0; border-bottom:1px solid #e0e0e0; background:#f0fdf4; }
+        .swot-quadrant:nth-child(2){ border-bottom:1px solid #e0e0e0; background:#fff7f7; }
+        .swot-quadrant:nth-child(3){ border-right:1px solid #e0e0e0; background:#f0f4ff; }
+        .swot-quadrant:nth-child(4){ background:#fefce8; }
+        .swot-label {
+            font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase;
+            margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid currentColor;
+        }
+        .swot-quadrant:nth-child(1) .swot-label{ color:#15803d; }
+        .swot-quadrant:nth-child(2) .swot-label{ color:#dc2626; }
+        .swot-quadrant:nth-child(3) .swot-label{ color:#667eea; }
+        .swot-quadrant:nth-child(4) .swot-label{ color:#d97706; }
+        .swot-item {
+            display:flex; align-items:flex-start; gap:7px;
+            margin-bottom:7px; font-size:12.5px; line-height:1.45; color:#444;
+        }
+        .swot-item::before{ content:"•"; flex-shrink:0; font-weight:700; }
+        .swot-quadrant:nth-child(1) .swot-item::before{ color:#15803d; }
+        .swot-quadrant:nth-child(2) .swot-item::before{ color:#dc2626; }
+        .swot-quadrant:nth-child(3) .swot-item::before{ color:#667eea; }
+        .swot-quadrant:nth-child(4) .swot-item::before{ color:#d97706; }
+        .swot-axis-row {
+            display:grid; grid-template-columns:1fr 1fr; text-align:center;
+            font-size:10px; font-weight:700; letter-spacing:.8px;
+            text-transform:uppercase; color:#bbb; padding:10px 22px 4px;
+        }
+        @media (max-width:768px){
+            .insight-two-col{ grid-template-columns:1fr; }
+            .swot-grid{ grid-template-columns:1fr; }
+        }
     </style>
 </head>
 <body>
@@ -395,9 +464,9 @@
             <div>
                 <label>Date Period:</label>
                 <div class="date-range-group">
-                    <input type="date" id="startDate" min="2025-11-01" value="2025-11-01">
+                    <input type="date" id="startDate" min="2025-11-01" value="2026-04-01">
                     <span style="color: rgba(255,255,255,0.8);">to</span>
-                    <input type="date" id="endDate" min="2025-11-01" value="2026-03-31">
+                    <input type="date" id="endDate" min="2025-11-01" value="2026-04-30">
                 </div>
             </div>
         </div>
@@ -416,6 +485,7 @@
         <div class="tab" data-tab="dow-analysis">📅 Day of Week</div>
         <div class="tab" data-tab="bsr-tracking">🏅 BSR Tracking</div>
         <div class="tab" data-tab="sov-tracking">📡 SOV Tracking</div>
+        <div class="tab" data-tab="insights">🤖 Insights</div>
     </div>
 
     <div class="content">
@@ -902,6 +972,76 @@
                     </thead>
                     <tbody id="sovPositionBody"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Insights Tab -->
+        <div id="insights" class="tab-content">
+            <div class="insights-container">
+
+                <!-- Period badge -->
+                <div class="insight-period-badge">
+                    🤖 AI Insights &nbsp;—&nbsp; <span id="insightsPeriodLabel">Loading...</span>
+                </div>
+
+                <!-- Executive Summary -->
+                <div class="insight-section">
+                    <div class="insight-section-header" style="background:#f8f9ff;">📋 Executive Summary</div>
+                    <div class="insight-section-body">
+                        <div class="exec-summary-text" id="insightsExecSummary">Loading insights…</div>
+                    </div>
+                </div>
+
+                <!-- What's Working / Not Working -->
+                <div class="insight-two-col">
+                    <div class="insight-section">
+                        <div class="insight-section-header" style="background:#f0fdf4; color:#15803d;">✅ What's Working</div>
+                        <div class="insight-section-body">
+                            <div class="insight-bullet-list" id="insightsWorking"></div>
+                        </div>
+                    </div>
+                    <div class="insight-section">
+                        <div class="insight-section-header" style="background:#fff7f7; color:#dc2626;">⚠️ What's Not Working</div>
+                        <div class="insight-section-body">
+                            <div class="insight-bullet-list" id="insightsNotWorking"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Opportunities -->
+                <div class="insight-section">
+                    <div class="insight-section-header" style="background:#f0f4ff; color:#667eea;">🚀 Opportunities</div>
+                    <div class="insight-section-body">
+                        <div class="opp-grid" id="insightsOpportunities"></div>
+                    </div>
+                </div>
+
+                <!-- SWOT -->
+                <div class="insight-section">
+                    <div class="insight-section-header" style="background:#f8f9ff;">🔲 SWOT Analysis</div>
+                    <div class="swot-axis-row" style="padding:10px 22px 0;">
+                        <span>Helpful</span><span>Harmful</span>
+                    </div>
+                    <div class="swot-grid">
+                        <div class="swot-quadrant">
+                            <div class="swot-label">Strengths</div>
+                            <div id="swotStrengths"></div>
+                        </div>
+                        <div class="swot-quadrant">
+                            <div class="swot-label">Weaknesses</div>
+                            <div id="swotWeaknesses"></div>
+                        </div>
+                        <div class="swot-quadrant">
+                            <div class="swot-label">Opportunities</div>
+                            <div id="swotOpportunities"></div>
+                        </div>
+                        <div class="swot-quadrant">
+                            <div class="swot-label">Threats</div>
+                            <div id="swotThreats"></div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -1427,6 +1567,7 @@
                     if (tab.dataset.tab === 'dow-analysis') renderDowTab();
                     if (tab.dataset.tab === 'bsr-tracking') renderBSRTab();
                     if (tab.dataset.tab === 'sov-tracking') renderSOVTab();
+                    if (tab.dataset.tab === 'insights') renderInsightsTab();
                 });
             });
 
@@ -2976,6 +3117,340 @@ function renderCampaignTargetingTab() {
 
 
 
+        // ── Insights Tab ──────────────────────────────────────────────────────────
+        function renderInsightsTab() {
+            const filtered   = getFilteredData();
+            const startDate  = document.getElementById('startDate').value;
+            const endDate    = document.getElementById('endDate').value;
+            const prevPeriod = getPreviousPeriod(startDate, endDate);
+
+            // ── Portfolio-level metrics (current) ────────────────────────
+            const cur   = calculateMetrics(filtered.campaigns);
+            const ts    = filtered.timeSeries || [];
+            const curCOGS = ts.reduce((s,d) => s + (d['Shipped COGS'] || 0), 0);
+            const curTACoS = curCOGS > 0 ? (cur.totalSpend / curCOGS * 100) : 0;
+
+            // ── Portfolio-level metrics (prior) ──────────────────────────
+            const prev   = calculateMetrics(filtered.comparison.campaigns);
+            const compTS = filtered.comparison.timeSeries || [];
+            const prevCOGS = compTS.reduce((s,d) => s + (d['Shipped COGS'] || 0), 0);
+            const prevTACoS = prevCOGS > 0 ? (prev.totalSpend / prevCOGS * 100) : 0;
+
+            const revChange   = prevCOGS    > 0 ? (curCOGS - prevCOGS) / prevCOGS * 100 : 0;
+            const spendChange = prev.totalSpend > 0 ? (cur.totalSpend - prev.totalSpend) / prev.totalSpend * 100 : 0;
+            const roasChange  = cur.avgROAS - prev.avgROAS;
+            const tacosChange = curTACoS - prevTACoS;
+
+            // ── Product-group aggregation (asin_performance) ──────────────
+            function aggregatePerf(rows) {
+                const map = {};
+                rows.forEach(d => {
+                    const g = d['Product Group'] || 'Other';
+                    if (!map[g]) map[g] = { revenue:0, cogs:0, units:0, adSpend:0, adSales:0, purchases:0 };
+                    map[g].revenue   += d['Shipped Revenue'] || 0;
+                    map[g].cogs      += d['Shipped COGS']    || 0;
+                    map[g].units     += d['Shipped Units']   || 0;
+                    map[g].adSpend   += d['Total cost']      || 0;
+                    map[g].adSales   += d.Sales              || 0;
+                    map[g].purchases += d.Purchases          || 0;
+                });
+                return Object.entries(map).map(([group, m]) => ({
+                    group,
+                    ...m,
+                    roas:  m.adSpend  > 0 ? m.adSales / m.adSpend  : 0,
+                    tacos: m.cogs     > 0 ? m.adSpend / m.cogs * 100 : 0,
+                    cac:   m.purchases > 0 ? m.adSpend / m.purchases : 0
+                })).filter(g => g.cogs > 0 || g.revenue > 0);
+            }
+
+            const perfList     = aggregatePerf(filtered.performance).sort((a,b) => b.cogs - a.cogs);
+            const prevPerfList = aggregatePerf(filtered.comparison.performance);
+
+            // deltas by group
+            perfList.forEach(g => {
+                const pp = prevPerfList.find(p => p.group === g.group);
+                g.cogsChange    = pp && pp.cogs   > 0 ? (g.cogs - pp.cogs) / pp.cogs * 100 : null;
+                g.roasChangePP  = pp ? g.roas - pp.roas : null;
+                g.tacosChangePP = pp ? g.tacos - pp.tacos : null;
+                g.prevCogs      = pp ? pp.cogs : 0;
+            });
+
+            const topGroup    = perfList[0];
+            const bottomGroup = perfList.length > 1 ? perfList[perfList.length - 1] : null;
+            const growingGroups  = perfList.filter(g => g.cogsChange !== null && g.cogsChange > 5).sort((a,b) => b.cogsChange - a.cogsChange);
+            const decliningGroups = perfList.filter(g => g.cogsChange !== null && g.cogsChange < -5).sort((a,b) => a.cogsChange - b.cogsChange);
+            const highTacosGroups = perfList.filter(g => g.tacos > 22 && g.cogs > 500);
+            const lowTacosGroups  = perfList.filter(g => g.tacos > 0 && g.tacos < 12 && g.cogs > 500);
+
+            // ── ASIN-level (individual products) ────────────────────────
+            function aggregateASIN(rows) {
+                const map = {};
+                rows.forEach(d => {
+                    const asin = d.ASIN || '';
+                    if (!asin) return;
+                    if (!map[asin]) map[asin] = { asin, group: d['Product Group']||'', revenue:0, cogs:0, units:0, adSpend:0, adSales:0, purchases:0 };
+                    map[asin].revenue   += d['Shipped Revenue'] || 0;
+                    map[asin].cogs      += d['Shipped COGS']    || 0;
+                    map[asin].units     += d['Shipped Units']   || 0;
+                    map[asin].adSpend   += d['Total cost']      || 0;
+                    map[asin].adSales   += d.Sales              || 0;
+                    map[asin].purchases += d.Purchases          || 0;
+                });
+                return Object.values(map).map(a => ({
+                    ...a,
+                    roas:  a.adSpend  > 0 ? a.adSales / a.adSpend  : 0,
+                    tacos: a.cogs     > 0 ? a.adSpend / a.cogs * 100 : 0
+                })).filter(a => a.cogs > 0);
+            }
+            const asinList = aggregateASIN(filtered.performance).sort((a,b) => b.cogs - a.cogs);
+            const prevAsinList = aggregateASIN(filtered.comparison.performance);
+            asinList.forEach(a => {
+                const pp = prevAsinList.find(p => p.asin === a.asin);
+                a.cogsChange = pp && pp.cogs > 0 ? (a.cogs - pp.cogs) / pp.cogs * 100 : null;
+            });
+            const topASIN    = asinList[0];
+            const bottomASIN = asinList.length > 1 ? asinList[asinList.length - 1] : null;
+
+            // ── Search term waste (zero conversions) ─────────────────────
+            const termMap = {};
+            filtered.terms.forEach(d => {
+                const t = d['Search term'] || '';
+                if (!t) return;
+                if (!termMap[t]) termMap[t] = { term:t, spend:0, sales:0, purchases:0, clicks:0, impressions:0 };
+                termMap[t].spend       += d['Total cost']  || 0;
+                termMap[t].sales       += d.Sales          || 0;
+                termMap[t].purchases   += d.Purchases      || 0;
+                termMap[t].clicks      += d.Clicks         || 0;
+                termMap[t].impressions += d.Impressions    || 0;
+            });
+            const termArr = Object.values(termMap).map(t => ({
+                ...t, roas: t.spend>0 ? t.sales/t.spend : 0,
+                ctr:  t.impressions>0 ? t.clicks/t.impressions*100 : 0,
+                cvr:  t.clicks>0      ? t.purchases/t.clicks*100   : 0
+            }));
+            const wastedTerms = termArr.filter(t => t.spend > 30 && t.purchases === 0).sort((a,b) => b.spend - a.spend);
+            const topTerm     = termArr.filter(t => t.spend > 20).sort((a,b) => b.roas - a.roas)[0];
+            const highCTRLowCVR = termArr.filter(t => t.ctr > 0.3 && t.cvr < 5 && t.clicks > 15).sort((a,b) => b.clicks - a.clicks)[0];
+
+            // ── Helper: fmt ───────────────────────────────────────────────
+            function fmt$(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
+            function fmtPct(n){ return (n>=0?'+':'')+n.toFixed(1)+'%'; }
+            function fmtDate(d){
+                if (!d) return '';
+                const [y,m,dy] = d.split('-');
+                const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                return mo[+m-1] + (dy ? ' '+parseInt(dy) : '') + ', ' + y;
+            }
+            function truncate(s, n){ return s && s.length > n ? s.slice(0,n)+'…' : (s||''); }
+
+            // ── Period label ──────────────────────────────────────────────
+            const periodLabel = `${fmtDate(startDate)} – ${fmtDate(endDate)}`;
+            const priorLabel  = `${fmtDate(prevPeriod.start)} – ${fmtDate(prevPeriod.end)}`;
+            const el = document.getElementById('insightsPeriodLabel');
+            if (el) el.textContent = `${periodLabel}  vs.  ${priorLabel}`;
+
+            // ── Executive Summary ─────────────────────────────────────────
+            const parts = [];
+            // Revenue headline
+            if (curCOGS > 0) {
+                const dir = revChange >= 0 ? 'grew' : 'declined';
+                parts.push(`During ${periodLabel}, Stargazer Barn's total shipped revenue ${dir} ${Math.abs(revChange).toFixed(1)}% to ${fmt$(curCOGS)} compared to ${fmt$(prevCOGS)} in the prior period.`);
+            }
+            // Product group spotlight
+            if (topGroup) {
+                const cogsStr = topGroup.cogsChange !== null ? ` (${fmtPct(topGroup.cogsChange)} vs. prior)` : '';
+                parts.push(`${topGroup.group} continues to lead the portfolio, contributing ${fmt$(topGroup.cogs)} in shipped COGS${cogsStr}.`);
+            }
+            if (growingGroups.length > 0 && growingGroups[0] !== topGroup) {
+                parts.push(`${growingGroups[0].group} showed the strongest momentum, up ${growingGroups[0].cogsChange.toFixed(1)}% vs. the prior period.`);
+            }
+            // TACoS commentary
+            if (Math.abs(tacosChange) > 0.5) {
+                const tacosDir = tacosChange < 0 ? 'tightened' : 'expanded';
+                const implication = tacosChange < 0 ? 'suggesting improving ad efficiency relative to revenue.' : 'indicating ad spend is growing faster than shipped revenue — a signal worth investigating.';
+                parts.push(`Portfolio TACoS ${tacosDir} ${Math.abs(tacosChange).toFixed(1)}pp to ${curTACoS.toFixed(1)}%, ${implication}`);
+            } else {
+                parts.push(`Portfolio TACoS held steady at ${curTACoS.toFixed(1)}%.`);
+            }
+            // Waste signal
+            if (wastedTerms.length > 3) {
+                parts.push(`One actionable quick win: ${wastedTerms.length} search terms are consuming ${fmt$(wastedTerms.reduce((s,t)=>s+t.spend,0))} with zero conversions — prime candidates for negative keyword additions.`);
+            }
+            const execEl = document.getElementById('insightsExecSummary');
+            if (execEl) execEl.textContent = parts.join(' ');
+
+            // ── What's Working ────────────────────────────────────────────
+            const working = [];
+
+            // Revenue growth overall
+            if (revChange > 3) {
+                working.push({ icon:'📈', label:`Portfolio Revenue Up ${revChange.toFixed(1)}%`, detail:`Shipped revenue grew from ${fmt$(prevCOGS)} to ${fmt$(curCOGS)} — a healthy trajectory across the period.` });
+            }
+
+            // Fastest-growing product group
+            if (growingGroups.length > 0) {
+                const g = growingGroups[0];
+                working.push({ icon:'🌸', label:`${truncate(g.group,32)} — Fastest Growing`, detail:`Revenue up ${g.cogsChange.toFixed(1)}% vs. prior period (${fmt$(g.prevCogs)} → ${fmt$(g.cogs)}). Leading group for incremental growth.` });
+            }
+
+            // Top ASIN by revenue
+            if (topASIN) {
+                const chgStr = topASIN.cogsChange !== null ? ` — ${fmtPct(topASIN.cogsChange)} vs. prior` : '';
+                working.push({ icon:'⭐', label:`Top ASIN: ${topASIN.asin}${topASIN.group ? ' ('+truncate(topASIN.group,20)+')' : ''}`, detail:`${fmt$(topASIN.cogs)} in shipped COGS${chgStr}. The single highest-contributing product in the portfolio.` });
+            }
+
+            // Low TACoS product group
+            if (lowTacosGroups.length > 0) {
+                const g = lowTacosGroups[0];
+                working.push({ icon:'⚡', label:`${truncate(g.group,32)} — Efficient Ad Spend`, detail:`TACoS of ${g.tacos.toFixed(1)}% is well within range, with ${fmt$(g.cogs)} in revenue carrying a lean ad load.` });
+            }
+
+            // Top-converting search term
+            if (topTerm) {
+                working.push({ icon:'🔍', label:`Best Keyword: "${truncate(topTerm.term,35)}"`, detail:`${topTerm.roas.toFixed(2)}x ROAS on ${fmt$(topTerm.spend)} spend with ${topTerm.purchases} purchases — the most efficient search term in the mix.` });
+            }
+
+            // TACoS improved
+            if (tacosChange < -1) {
+                working.push({ icon:'💰', label:`TACoS Improved ${Math.abs(tacosChange).toFixed(1)}pp`, detail:`Down from ${prevTACoS.toFixed(1)}% to ${curTACoS.toFixed(1)}% — ads are delivering more revenue per dollar, protecting margins.` });
+            }
+
+            const wEl = document.getElementById('insightsWorking');
+            if (wEl) wEl.innerHTML = working.length > 0
+                ? working.map(i => `<div class="insight-bullet bullet-working"><div class="insight-bullet-icon">${i.icon}</div><div><div class="insight-bullet-label">${i.label}</div><div class="insight-bullet-detail">${i.detail}</div></div></div>`).join('')
+                : '<p style="color:#888;font-size:13px;">Expand the date range to surface more insights.</p>';
+
+            // ── What's Not Working ────────────────────────────────────────
+            const notWorking = [];
+
+            // Revenue decline overall
+            if (revChange < -3) {
+                notWorking.push({ icon:'📉', label:`Portfolio Revenue Down ${Math.abs(revChange).toFixed(1)}%`, detail:`Shipped revenue fell from ${fmt$(prevCOGS)} to ${fmt$(curCOGS)}. Review whether this is demand-driven or tied to listing/stock issues.` });
+            }
+
+            // Declining product groups
+            if (decliningGroups.length > 0) {
+                const g = decliningGroups[0];
+                notWorking.push({ icon:'🔻', label:`${truncate(g.group,32)} — Declining Revenue`, detail:`Down ${Math.abs(g.cogsChange).toFixed(1)}% vs. prior period (${fmt$(g.prevCogs)} → ${fmt$(g.cogs)}). Check inventory levels, listing suppression, or increased competition.` });
+            }
+
+            // High TACoS product groups
+            if (highTacosGroups.length > 0) {
+                const g = highTacosGroups[0];
+                notWorking.push({ icon:'📊', label:`${truncate(g.group,32)} — Elevated TACoS (${g.tacos.toFixed(1)}%)`, detail:`Ad spend consuming ${g.tacos.toFixed(1)}% of shipped COGS for this group. Bids may need tightening or organic rank needs improvement to reduce dependency.` });
+            }
+
+            // TACoS expanded portfolio-wide
+            if (tacosChange > 1.5) {
+                notWorking.push({ icon:'⚠️', label:`Portfolio TACoS Expanded +${tacosChange.toFixed(1)}pp`, detail:`Rose from ${prevTACoS.toFixed(1)}% to ${curTACoS.toFixed(1)}%. Ad spend is outpacing revenue growth — review bid strategies and search term coverage.` });
+            }
+
+            // Weakest ASIN
+            if (bottomASIN && topASIN && bottomASIN.cogs < topASIN.cogs * 0.1) {
+                const chgStr = bottomASIN.cogsChange !== null ? ` — ${fmtPct(bottomASIN.cogsChange)} vs. prior` : '';
+                notWorking.push({ icon:'📦', label:`Weakest ASIN: ${bottomASIN.asin}${bottomASIN.group ? ' ('+truncate(bottomASIN.group,20)+')' : ''}`, detail:`${fmt$(bottomASIN.cogs)} in shipped COGS${chgStr}. Significantly underperforms the portfolio average — review listing health and ad coverage.` });
+            }
+
+            // Wasted search term spend
+            if (wastedTerms.length > 0) {
+                const wasted$ = wastedTerms.reduce((s,t)=>s+t.spend,0);
+                notWorking.push({ icon:'🗑️', label:`${wastedTerms.length} Keywords Spending — Zero Conversions`, detail:`${fmt$(wasted$)} in total spend with no purchases. Top offender: "${truncate(wastedTerms[0].term,30)}" at ${fmt$(wastedTerms[0].spend)}. Immediate negative keyword opportunity.` });
+            }
+
+            const nwEl = document.getElementById('insightsNotWorking');
+            if (nwEl) nwEl.innerHTML = notWorking.length > 0
+                ? notWorking.map(i => `<div class="insight-bullet bullet-notworking"><div class="insight-bullet-icon">${i.icon}</div><div><div class="insight-bullet-label">${i.label}</div><div class="insight-bullet-detail">${i.detail}</div></div></div>`).join('')
+                : '<p style="color:#888;font-size:13px;">No significant issues detected in this period.</p>';
+
+            // ── Opportunities ─────────────────────────────────────────────
+            const opps = [];
+
+            // Scale growing product group
+            if (growingGroups.length > 0) {
+                const g = growingGroups[0];
+                opps.push({ title:`📈 Double Down on ${truncate(g.group,28)}`, body:`Up ${g.cogsChange.toFixed(1)}% vs. prior period, this group is showing strong demand signals. Increasing ad investment here while momentum is high could compound gains.`, metric:`Current shipped: ${fmt$(g.cogs)}` });
+            }
+
+            // Fix high TACoS group
+            if (highTacosGroups.length > 0) {
+                const g = highTacosGroups[0];
+                opps.push({ title:`💡 Reduce Ad Dependency for ${truncate(g.group,25)}`, body:`TACoS of ${g.tacos.toFixed(1)}% for this group is elevated. A combination of bid adjustments, improved organic positioning, and review velocity could bring TACoS closer to target.`, metric:`TACoS target: <15%` });
+            }
+
+            // Negative keyword harvest
+            if (wastedTerms.length > 2) {
+                opps.push({ title:'🚫 Negative Keyword Harvest', body:`${wastedTerms.length} search terms are collectively spending ${fmt$(wastedTerms.reduce((s,t)=>s+t.spend,0))} with zero purchases. Adding these as negatives will redirect budget to better-converting placements.`, metric:`Top waste: "${truncate(wastedTerms[0].term,28)}" — ${fmt$(wastedTerms[0].spend)}` });
+            }
+
+            // CTR/CVR gap
+            if (highCTRLowCVR) {
+                opps.push({ title:'🛒 Listing Optimization — Conversion Gap', body:`"${truncate(highCTRLowCVR.term,35)}" is generating clicks (CTR: ${highCTRLowCVR.ctr.toFixed(2)}%) but not converting (CVR: ${highCTRLowCVR.cvr.toFixed(1)}%). Shoppers are interested — review main image, price, and bullet points for this search context.`, metric:`${highCTRLowCVR.clicks} clicks → ${highCTRLowCVR.purchases} purchases` });
+            }
+
+            // Unlock underperforming ASINs
+            if (asinList.length > 2) {
+                const avg = asinList.reduce((s,a) => s + a.cogs, 0) / asinList.length;
+                const under = asinList.filter(a => a.cogs < avg * 0.4 && a.cogs > 0);
+                if (under.length > 0) {
+                    opps.push({ title:'🧪 Activate Underperforming ASINs', body:`${under.length} ASIN${under.length>1?'s':''} (${under.slice(0,3).map(a=>a.asin).join(', ')}) are generating well below portfolio average revenue. Testing dedicated targeting or improving their listing content could unlock volume.`, metric:`Portfolio ASIN avg: ${fmt$(avg)}` });
+                }
+            }
+
+            // Diversify if single group is dominant
+            if (topGroup && curCOGS > 0 && topGroup.cogs / curCOGS > 0.55) {
+                opps.push({ title:'⚖️ Reduce Portfolio Concentration Risk', body:`${topGroup.group} accounts for ${(topGroup.cogs/curCOGS*100).toFixed(0)}% of total shipped revenue. Investing in growth for other product groups would reduce dependence on a single line and smooth out seasonal swings.`, metric:`${topGroup.group}: ${fmt$(topGroup.cogs)} of ${fmt$(curCOGS)} total` });
+            }
+
+            if (opps.length === 0) {
+                opps.push({ title:'✅ Portfolio in Good Shape', body:'No major structural issues detected. Continue monitoring TACoS by product group and scale investment in growing segments.', metric:'' });
+            }
+
+            const oppEl = document.getElementById('insightsOpportunities');
+            if (oppEl) oppEl.innerHTML = opps.map(o => `<div class="opp-card"><div class="opp-card-title">${o.title}</div><div class="opp-card-body">${o.body}</div>${o.metric?`<div class="opp-card-metric">${o.metric}</div>`:''}</div>`).join('');
+
+            // ── SWOT ──────────────────────────────────────────────────────
+            function si(text){ return `<div class="swot-item">${text}</div>`; }
+
+            const strengths = [];
+            if (topGroup) strengths.push(`${truncate(topGroup.group,30)} leads the portfolio at ${fmt$(topGroup.cogs)} shipped — a proven revenue engine`);
+            if (lowTacosGroups.length > 0) strengths.push(`${truncate(lowTacosGroups[0].group,30)} operates at a lean ${lowTacosGroups[0].tacos.toFixed(1)}% TACoS, indicating strong organic-to-paid balance`);
+            if (cur.avgROAS > 2.5) strengths.push(`Portfolio ROAS of ${cur.avgROAS.toFixed(2)}x demonstrates healthy ad-to-revenue conversion across campaigns`);
+            if (growingGroups.length > 1) strengths.push(`Multiple product groups showing growth — ${growingGroups.slice(0,2).map(g=>truncate(g.group,18)).join(' and ')} — indicates broad demand`);
+            if (tacosChange < -1) strengths.push(`TACoS improved ${Math.abs(tacosChange).toFixed(1)}pp vs. prior period — ad efficiency trend moving in right direction`);
+            if (strengths.length === 0) strengths.push('Established multi-product portfolio with diversified ASIN coverage');
+
+            const weaknesses = [];
+            if (highTacosGroups.length > 0) weaknesses.push(`${truncate(highTacosGroups[0].group,30)} TACoS of ${highTacosGroups[0].tacos.toFixed(1)}% is above sustainable range — margin pressure risk`);
+            if (wastedTerms.length > 2) weaknesses.push(`${wastedTerms.length} zero-conversion search terms represent structural budget leakage (${fmt$(wastedTerms.reduce((s,t)=>s+t.spend,0))})`);
+            if (decliningGroups.length > 0) weaknesses.push(`${truncate(decliningGroups[0].group,30)} declining ${Math.abs(decliningGroups[0].cogsChange).toFixed(1)}% — may need listing refresh or increased visibility`);
+            if (topGroup && curCOGS > 0 && topGroup.cogs/curCOGS > 0.55) weaknesses.push(`Revenue heavily concentrated in ${truncate(topGroup.group,25)} — high dependency on a single product line`);
+            if (tacosChange > 1.5) weaknesses.push(`Portfolio-wide TACoS expansion (+${tacosChange.toFixed(1)}pp) signals degrading ad efficiency`);
+            if (weaknesses.length === 0) weaknesses.push('No critical structural weaknesses detected — continue monitoring TACoS and conversion rates');
+
+            const swotOpps = [];
+            if (growingGroups.length > 0) swotOpps.push(`Scale ad investment in ${truncate(growingGroups[0].group,30)} while demand momentum is positive`);
+            swotOpps.push('Expand keyword coverage by mining high-converting search terms for new match type testing');
+            if (highCTRLowCVR) swotOpps.push(`Listing optimization for "${truncate(highCTRLowCVR.term,30)}" — high intent, low conversion signals fixable friction`);
+            if (asinList.length > 3) swotOpps.push('Develop dedicated campaigns for underperforming ASINs to unlock incremental revenue from existing inventory');
+            swotOpps.push('Seasonal demand peaks (holidays, gifting events) represent natural windows to front-load spend on high-ROAS products');
+
+            const threats = [];
+            threats.push('Rising CPC trends on key flower/gifting keywords as category grows and competition intensifies on Amazon');
+            if (curTACoS > 18) threats.push(`Current TACoS of ${curTACoS.toFixed(1)}% leaves thin margin buffer against potential cost increases (FBA fees, COGS, postage)`);
+            if (spendChange > 15 && revChange < spendChange / 2) threats.push(`Spend grew ${spendChange.toFixed(0)}% but revenue only ${revChange.toFixed(0)}% — diminishing returns may be setting in`);
+            threats.push('Amazon algorithm changes (A10) can shift organic rankings quickly, increasing ad dependency overnight');
+            threats.push('Perishable product category creates unique inventory and fulfillment risk that can suppress BSR and reviews unexpectedly');
+
+            const sStrEl = document.getElementById('swotStrengths');
+            const sWeEl  = document.getElementById('swotWeaknesses');
+            const sOpEl  = document.getElementById('swotOpportunities');
+            const sThEl  = document.getElementById('swotThreats');
+            if (sStrEl) sStrEl.innerHTML = strengths.map(si).join('');
+            if (sWeEl)  sWeEl.innerHTML  = weaknesses.map(si).join('');
+            if (sOpEl)  sOpEl.innerHTML  = swotOpps.map(si).join('');
+            if (sThEl)  sThEl.innerHTML  = threats.map(si).join('');
+        }
+
         function renderDashboard() {
             updateMetrics();
             renderTrendChart();
@@ -2995,6 +3470,7 @@ function renderCampaignTargetingTab() {
             renderAnnualPlanTable();
             renderAnnualPlanCharts();
             renderDowTab();
+            renderInsightsTab();
         }
 
         function updateMetrics() {
@@ -3064,146 +3540,110 @@ function renderCampaignTargetingTab() {
         }
 
         function getTimeSeriesForDimension() {
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
+            var startVal = document.getElementById('startDate').value;
+            var endVal   = document.getElementById('endDate').value;
 
-            let data;
-            if (currentDimension === 'daily') {
-                data = dashboardData.daily_series || [];
-            } else if (currentDimension === 'weekly') {
-                data = dashboardData.weekly_series || [];
-            } else {
-                data = dashboardData.time_series || [];
-            }
+            var source;
+            if (currentDimension === 'daily')        source = dashboardData.daily_series   || [];
+            else if (currentDimension === 'weekly')  source = dashboardData.weekly_series  || [];
+            else                                     source = dashboardData.time_series     || [];
 
-            if (startDate && endDate && data && data.length > 0) {
-                data = data.filter(d => {
-                    // daily_series uses lowercase 'date', weekly uses 'week', monthly uses 'Month_Period'
-                    const date = d.date || d.Date || d.week || d.Week || d.Month_Period;
-                    if (!date) return false;
+            if (!startVal || !endVal || !source.length) return source;
 
-                    // Handle month format (YYYY-MM) vs date format (YYYY-MM-DD)
-                    if (date.length === 7) {
-                        const monthStart = date + '-01';
-                        const monthEnd = date + '-31';
-                        return monthStart <= endDate && monthEnd >= startDate;
-                    }
-                    return date >= startDate && date <= endDate;
-                });
-            }
-
-            return data || [];
+            return source.filter(function(d) {
+                var raw = d.date || d.week || d.Month_Period || '';
+                if (!raw) return false;
+                // For monthly (YYYY-MM) expand to day range; daily/weekly already YYYY-MM-DD
+                var lo = raw.length === 7 ? raw + '-01' : raw;
+                var hi = raw.length === 7 ? raw + '-31' : raw;
+                return lo <= endVal && hi >= startVal;
+            });
         }
 
         function renderTrendChart() {
-            const data = getTimeSeriesForDimension();
-            const ctx = document.getElementById('trendChart');
+            var rawData = getTimeSeriesForDimension();
+            var ctx = document.getElementById('trendChart');
+            if (!ctx) return;
 
-            const metric1 = document.getElementById('metric1Select').value;
-            const metric2 = document.getElementById('metric2Select').value;
-            const metric3 = document.getElementById('metric3Select').value;
+            var metric1 = document.getElementById('metric1Select').value;
+            var metric2 = document.getElementById('metric2Select').value;
+            var metric3 = document.getElementById('metric3Select').value;
 
-            const datasets = [];
-            const colors = ['#667eea', '#764ba2', '#f59e0b'];
-            
-            // Metrics that should use the right axis (percentages and ratios)
-            const rightAxisMetrics = ['TACoS', 'ROAS', 'CTR', 'CAC'];
+            var colors = ['#667eea', '#764ba2', '#f59e0b'];
+            var rightAxisMetrics = ['TACoS', 'ROAS', 'CTR', 'CAC'];
 
-            [metric1, metric2, metric3].forEach((metric, i) => {
-                if (metric) {
-                    const useRightAxis = rightAxisMetrics.includes(metric);
-                    // Map metric names to correct field names for daily/weekly data
-                    // ROAS, CAC, CTR are computed from raw fields; TACoS/Shipped Revenue unavailable daily
-                    const getMetricVal = (d, m) => {
-                        if (currentDimension === 'monthly') return d[m] !== undefined ? d[m] : 0;
-                        // Direct field mappings
-                        const directMap = {'Total cost':'spend','Sales':'sales','Purchases':'purchases','Impressions':'impressions','Clicks':'clicks'};
-                        if (directMap[m]) return d[directMap[m]] || 0;
-                        // Computed metrics from raw daily/weekly fields
-                        if (m === 'ROAS')  return (d.spend > 0) ? d.sales / d.spend : 0;
-                        if (m === 'CAC')   return (d.purchases > 0) ? d.spend / d.purchases : 0;
-                        if (m === 'CTR')   return (d.impressions > 0) ? (d.clicks / d.impressions * 100) : 0;
-                        // Metrics requiring monthly data only (TACoS, Shipped Revenue, Shipped COGS)
-                        return null;
-                    };
-                    datasets.push({
-                        label: metric,
-                        data: data.map(d => getMetricVal(d, metric)),
-                        borderColor: colors[i],
-                        backgroundColor: colors[i] + '20',
-                        tension: 0.4,
-                        fill: false,
-                        yAxisID: useRightAxis ? 'y1' : 'y',
-                        borderWidth: 2
-                    });
-                }
+            var metricLabels = {
+                'Total cost':'Ad Spend', 'Sales':'Ad Sales', 'Shipped Revenue':'Total Revenue',
+                'TACoS':'TACoS (%)', 'ROAS':'ROAS', 'Purchases':'Purchases',
+                'Impressions':'Impressions', 'Clicks':'Clicks', 'CTR':'CTR (%)', 'CAC':'CAC'
+            };
+
+            function getVal(d, m) {
+                if (currentDimension === 'monthly') return d[m] != null ? +d[m] : 0;
+                if (m === 'Total cost')  return +(d.spend       || 0);
+                if (m === 'Sales')       return +(d.sales       || 0);
+                if (m === 'Purchases')   return +(d.purchases   || 0);
+                if (m === 'Impressions') return +(d.impressions || 0);
+                if (m === 'Clicks')      return +(d.clicks      || 0);
+                if (m === 'ROAS')  return d.spend > 0 ? d.sales / d.spend : 0;
+                if (m === 'CAC')   return d.purchases > 0 ? d.spend / d.purchases : 0;
+                if (m === 'CTR')   return d.impressions > 0 ? d.clicks / d.impressions * 100 : 0;
+                return null; // TACoS / Shipped Revenue not available in daily or weekly view
+            }
+
+            function getLabel(d) {
+                if (currentDimension === 'daily')  return d.date || '';
+                if (currentDimension === 'weekly') return 'Wk ' + (d.week || '');
+                return fmtMonth(d.Month_Period || '');
+            }
+
+            var datasets = [];
+            [metric1, metric2, metric3].forEach(function(m, i) {
+                if (!m) return;
+                datasets.push({
+                    label: metricLabels[m] || m,
+                    data: rawData.map(function(d) { return getVal(d, m); }),
+                    borderColor: colors[i],
+                    backgroundColor: colors[i] + '20',
+                    tension: 0.4,
+                    fill: false,
+                    yAxisID: rightAxisMetrics.includes(m) ? 'y1' : 'y',
+                    borderWidth: 2,
+                    pointRadius: rawData.length <= 12 ? 4 : 2,
+                    spanGaps: true
+                });
             });
 
             if (charts.trendChart) charts.trendChart.destroy();
 
             charts.trendChart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: data.map(d => {
-                        if (currentDimension === 'daily') return d.date || d.Date;
-                        if (currentDimension === 'weekly') return 'Wk ' + (d.week || d.Week || '');
-                        return fmtMonth(d.Month_Period);
-                    }),
-                    datasets
-                },
+                data: { labels: rawData.map(getLabel), datasets: datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
+                    interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { display: true, position: 'top' },
-                        tooltip: { 
-                            mode: 'index', 
+                        tooltip: {
+                            mode: 'index',
                             intersect: false,
                             callbacks: {
                                 label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    const value = context.parsed.y;
-                                    if (context.dataset.label.includes('$') || ['Total cost', 'Sales', 'Shipped Revenue'].includes(context.dataset.label)) {
-                                        label += '$' + value.toLocaleString('en-US', {maximumFractionDigits: 0});
-                                    } else if (['TACoS', 'CTR'].includes(context.dataset.label)) {
-                                        label += value.toFixed(2) + '%';
-                                    } else if (context.dataset.label === 'ROAS') {
-                                        label += value.toFixed(2) + 'x';
-                                    } else {
-                                        label += value.toLocaleString('en-US', {maximumFractionDigits: 0});
-                                    }
-                                    return label;
+                                    var lbl = (context.dataset.label || '') + ': ';
+                                    var v = context.parsed.y;
+                                    var m = context.dataset.label;
+                                    if (['Ad Spend','Ad Sales','Total Revenue','CAC'].includes(m)) return lbl + '$' + v.toLocaleString('en-US',{maximumFractionDigits:0});
+                                    if (['TACoS (%)','CTR (%)'].includes(m)) return lbl + v.toFixed(2) + '%';
+                                    if (m === 'ROAS') return lbl + v.toFixed(2) + 'x';
+                                    return lbl + v.toLocaleString('en-US',{maximumFractionDigits:0});
                                 }
                             }
                         }
                     },
-                    scales: { 
-                        y: { 
-                            type: 'linear',
-                            position: 'left',
-                            beginAtZero: true,
-                            title: { 
-                                display: true, 
-                                text: 'Dollars / Units' 
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            position: 'right',
-                            beginAtZero: true,
-                            title: { 
-                                display: true, 
-                                text: 'Ratios / Percentages' 
-                            },
-                            grid: {
-                                drawOnChartArea: false
-                            }
-                        }
+                    scales: {
+                        y:  { type:'linear', position:'left',  beginAtZero:true, title:{display:true, text:'Dollars / Units'} },
+                        y1: { type:'linear', position:'right', beginAtZero:true, title:{display:true, text:'Ratios / Percentages'}, grid:{drawOnChartArea:false} }
                     }
                 }
             });
