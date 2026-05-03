@@ -2379,14 +2379,15 @@ function renderCampaignTargetingTab() {
             var ROAS_GOAL  = 5.0;
             var TACOS_GOAL = 10.0;
 
-            // Load Jan + Feb + Mar 2026 actuals
+            // Load actuals dynamically for any 2026 month present in time_series
             var actuals = {};
             var ts = dashboardData.time_series || [];
             for (var ti = 0; ti < ts.length; ti++) {
                 var mp = ts[ti].Month_Period || '';
-                if (mp === '2026-01') { actuals[0] = ts[ti]; }
-                if (mp === '2026-02') { actuals[1] = ts[ti]; }
-                if (mp === '2026-03') { actuals[2] = ts[ti]; }
+                if (mp.startsWith('2026-')) {
+                    var monthIdx = parseInt(mp.split('-')[1], 10) - 1; // 0=Jan … 11=Dec
+                    actuals[monthIdx] = ts[ti];
+                }
             }
 
             function fmtMoney(v) { return '$' + Math.round(v).toLocaleString('en-US'); }
