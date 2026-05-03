@@ -3441,7 +3441,7 @@ function renderCampaignTargetingTab() {
             swotOpps.push('Mine high-CVR search terms to seed new exact/phrase-match ad groups and expand keyword coverage');
             if (highCTRLowCVR) swotOpps.push(`Fix conversion friction for "${trunc(highCTRLowCVR.term,28)}" — high CTR (${highCTRLowCVR.ctr.toFixed(2)}%) signals real demand not being captured`);
             if (asinList.length > 3) swotOpps.push('Build dedicated campaigns for underperforming ASINs to diversify revenue beyond top 1–2 products');
-            swotOpps.push('Seasonal peaks (Valentine's, Mother's Day, wedding season) offer concentrated windows to front-load on high-BSR, high-ROAS products');
+            swotOpps.push("Seasonal peaks (Valentine's, Mother's Day, wedding season) offer concentrated windows to front-load on high-BSR, high-ROAS products");
 
             const threats = [];
             if (cpcChange > 10) threats.push(`CPC rose ${cpcChange.toFixed(0)}% to ${fmt$(portCPC)} — competitive intensity is increasing and compressing margins`);
