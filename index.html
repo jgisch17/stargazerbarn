@@ -3087,10 +3087,43 @@ function renderCampaignTargetingTab() {
 
         // ── Day of Week colours ──────────────────────────────────────────────
         var DOW_COLORS = ['#667eea','#43a047','#ef5350','#fb8c00','#9c27b0','#00acc1','#e91e63'];
+        var DOW_ORDER  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+        function computeDowSummaryFromDailySeries(startDate, endDate) {
+            var dailyData = (dashboardData && dashboardData.daily_series) ? dashboardData.daily_series : [];
+            var filtered = dailyData.filter(function(d) { return d.date >= startDate && d.date <= endDate; });
+            var dowMap = {};
+            DOW_ORDER.forEach(function(day) {
+                dowMap[day] = { day: day, spend: 0, sales: 0, clicks: 0, impressions: 0, purchases: 0, num_days: 0, groups: [] };
+            });
+            filtered.forEach(function(d) {
+                var dow = new Date(d.date + 'T12:00:00').getDay(); // noon avoids DST edge cases
+                var dayName = DOW_ORDER[dow === 0 ? 6 : dow - 1];
+                var e = dowMap[dayName];
+                e.spend      += d.spend       || 0;
+                e.sales      += d.sales       || 0;
+                e.clicks     += d.clicks      || 0;
+                e.impressions+= d.impressions || 0;
+                e.purchases  += d.purchases   || 0;
+                e.num_days   += 1;
+            });
+            DOW_ORDER.forEach(function(day) {
+                var e = dowMap[day];
+                e.avg_spend = e.num_days  ? e.spend    / e.num_days  : 0;
+                e.avg_sales = e.num_days  ? e.sales    / e.num_days  : 0;
+                e.cpc       = e.clicks    ? e.spend    / e.clicks    : 0;
+                e.roas      = e.spend     ? e.sales    / e.spend     : 0;
+                e.cac       = e.purchases ? e.spend    / e.purchases : 0;
+                e.ctr       = e.impressions ? e.clicks / e.impressions * 100 : 0;
+            });
+            return DOW_ORDER.map(function(day) { return dowMap[day]; });
+        }
 
         function renderDowChart() {
-            var data = (dashboardData && dashboardData.dow_summary) ? dashboardData.dow_summary : [];
-            if (!data.length) return;
+            var startDate = document.getElementById('startDate').value;
+            var endDate   = document.getElementById('endDate').value;
+            var data = computeDowSummaryFromDailySeries(startDate, endDate);
+            if (!data.length || data.every(function(d){ return d.num_days === 0; })) return;
             var metricKey = (document.getElementById('dowChartMetric') || {}).value || 'roas';
             var labels = { spend:'Ad Spend ($)', sales:'Ad Sales ($)', roas:'ROAS', cac:'CAC ($)',
                            cpc:'CPC ($)', clicks:'Clicks', avg_spend:'Avg Daily Spend ($)', avg_sales:'Avg Daily Sales ($)' };
@@ -3153,9 +3186,11 @@ function renderCampaignTargetingTab() {
         }
 
         function renderDowTable() {
-            var data = (dashboardData && dashboardData.dow_summary) ? dashboardData.dow_summary : [];
+            var startDate = document.getElementById('startDate').value;
+            var endDate   = document.getElementById('endDate').value;
+            var data = computeDowSummaryFromDailySeries(startDate, endDate);
             var tbody = document.getElementById('dowTableBody');
-            if (!tbody || !data.length) return;
+            if (!tbody || data.every(function(d){ return d.num_days === 0; })) return;
             tbody.innerHTML = '';
 
             var fmt$ = function(v) { return '$' + (v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); };
