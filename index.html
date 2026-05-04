@@ -1024,21 +1024,17 @@
                 </div>
             </div>
 
-            <!-- Heatmap Table -->
-            <div class="chart-container" style="padding:20px; overflow-x:auto;">
-                <div class="chart-title">🗓️ BSR Rank History — Full Table</div>
-                <p style="font-size:12px; color:#888; margin-bottom:6px;">Spend shown is per individual SKU. Source: one_off_copy.csv, Mar 2026. $0 = no spend recorded for that date.</p>
-                <p style="font-size:12px; color:#888; margin-bottom:12px;">
-                    Color scale: <span style="background:#15803d;color:#fff;padding:2px 8px;border-radius:3px;">1–5</span>
-                    <span style="background:#4ade80;color:#1a1a1a;padding:2px 8px;border-radius:3px;margin-left:4px;">6–10</span>
-                    <span style="background:#fbbf24;color:#1a1a1a;padding:2px 8px;border-radius:3px;margin-left:4px;">11–20</span>
-                    <span style="background:#f97316;color:#fff;padding:2px 8px;border-radius:3px;margin-left:4px;">21–30</span>
-                    <span style="background:#e5e7eb;color:#888;padding:2px 8px;border-radius:3px;margin-left:4px;">Not ranked</span>
-                </p>
-                <table id="bsrTable" style="width:100%; border-collapse:collapse; font-size:13px;">
-                    <thead><tr id="bsrTableHeader"></tr></thead>
-                    <tbody id="bsrTableBody"></tbody>
-                </table>
+            <!-- BSR + Ad Spend Overlay -->
+            <div class="chart-container" style="padding:20px;">
+                <div class="chart-title">💡 BSR Rank + Daily Ad Spend — ASIN Deep Dive</div>
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+                    <label style="font-size:13px; color:#555; font-weight:600;">ASIN / Product:</label>
+                    <select id="bsrOverlayAsin" onchange="renderBSROverlayChart()" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:13px; min-width:240px;"></select>
+                    <span style="margin-left:auto; font-size:12px; color:#888;">Blue (left): BSR Rank &nbsp;|&nbsp; Orange (right): Daily Ad Spend</span>
+                </div>
+                <div style="position:relative; height:360px;">
+                    <canvas id="bsrOverlayChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -5036,177 +5032,103 @@ function renderCampaignTargetingTab() {
                 });
             }
 
-            // ---- Heatmap Table ----
-            function rankColor(rank) {
-                if (rank === null) return { bg: '#f3f4f6', fg: '#9ca3af' };
-                if (rank <= 5)  return { bg: '#15803d', fg: '#fff' };
-                if (rank <= 10) return { bg: '#4ade80', fg: '#1a1a1a' };
-                if (rank <= 20) return { bg: '#fbbf24', fg: '#1a1a1a' };
-                return { bg: '#f97316', fg: '#fff' };
+            // ---- ASIN overlay selector ----
+            const overlaySelect = document.getElementById('bsrOverlayAsin');
+            if (overlaySelect && !overlaySelect.dataset.populated) {
+                const sgProducts = (bsr.rankings || [])
+                    .filter(r => r.brand === 'Stargazer')
+                    .map(r => r.product);
+                overlaySelect.innerHTML = sgProducts
+                    .map(p => `<option value="${p}">${p}</option>`).join('');
+                overlaySelect.dataset.populated = '1';
             }
+            renderBSROverlayChart();
+        }
 
-            const spendLookup = dashboardData.bsr_spend_data || {};
-            const hdr = document.getElementById('bsrTableHeader');
-            const tbd = document.getElementById('bsrTableBody');
-            const thStyle = 'padding:8px 12px;text-align:center;font-size:12px;background:#f0f2ff;color:#667eea;border-bottom:2px solid #e0e4f8;white-space:nowrap;';
-            const thSpendStyle = 'padding:8px 12px;text-align:center;font-size:12px;background:#fff8e1;color:#b45309;border-bottom:2px solid #e0e4f8;white-space:nowrap;';
+        function renderBSROverlayChart() {
+            const bsr = dashboardData.bsr_data;
+            if (!bsr) return;
+            const sel = document.getElementById('bsrOverlayAsin');
+            if (!sel || !sel.value) return;
+            const product = sel.value;
 
-            if (bsrRollupMode) {
-                // ---- WEEKLY ROLLUP TABLE ----
-                const allWS = [...new Set(bsr.dates.map(d => getWeekStart(d)))].sort();
-                // Check partial weeks (fewer than 7 data points)
-                const wkDataCounts = allWS.map(ws => bsr.dates.filter(d => getWeekStart(d) === ws).length);
+            const rankRow = (bsr.rankings || []).find(r => r.product === product);
+            const spendMap = ((dashboardData.bsr_spend_data || {})[product]) || {};
 
-                const wkCols = allWS.map((ws, wi) => {
-                    const partial = wkDataCounts[wi] < 7;
-                    const lbl = weekLabel(ws) + (partial ? '*' : '');
-                    return `<th style="${thStyle}">Avg Rank<br><span style="font-size:10px;color:#999;">${lbl}</span></th>` +
-                           `<th style="${thSpendStyle}">Avg Spend<br><span style="font-size:10px;color:#b45309;">${lbl}</span></th>`;
-                }).join('');
-                hdr.innerHTML = `<th style="${thStyle}text-align:left;">Product</th><th style="${thStyle}">Brand</th>` +
-                    wkCols +
-                    `<th style="${thStyle}">Best Rank</th><th style="${thStyle}">Trend</th>`;
+            const labels = bsr.dates;
+            const rankData = rankRow ? rankRow.ranks : labels.map(() => null);
+            const spendData = labels.map(d => (spendMap[d] !== undefined ? spendMap[d] : null));
 
-                tbd.innerHTML = '';
-                // Sort by most recent week's avg rank ascending (best rank = lowest number = top)
-                const weekSortedRows = [...rows].sort((a, b) => {
-                    const aWkData = buildWeeklyData(bsr.dates, a.ranks);
-                    const bWkData = buildWeeklyData(bsr.dates, b.ranks);
-                    const aLatestAvg = aWkData.avgRanks.filter(v => v !== null).slice(-1)[0] ?? null;
-                    const bLatestAvg = bWkData.avgRanks.filter(v => v !== null).slice(-1)[0] ?? null;
-                    if (aLatestAvg === null && bLatestAvg === null) return 0;
-                    if (aLatestAvg === null) return 1;
-                    if (bLatestAvg === null) return -1;
-                    return aLatestAvg - bLatestAvg;
-                });
-                weekSortedRows.forEach(r => {
-                    const isSG = r.brand === 'Stargazer';
-                    const rowBg = isSG ? 'background:#f5f7ff;' : '';
-                    const tdStyle = `padding:7px 12px;border-bottom:1px solid #f0f0f0;${rowBg}`;
-                    const { weekStarts, avgRanks } = buildWeeklyData(bsr.dates, r.ranks);
-                    const productSpend = spendLookup[r.product] || null;
+            const ctx = document.getElementById('bsrOverlayChart');
+            if (!ctx) return;
+            if (charts.bsrOverlayChart) charts.bsrOverlayChart.destroy();
 
-                    const trendRanks = avgRanks.filter(v => v !== null);
-                    let trend = '—';
-                    if (trendRanks.length >= 2) {
-                        const first = trendRanks[0], last = trendRanks[trendRanks.length-1];
-                        trend = last < first ? '▲ Improving' : last > first ? '▼ Declining' : '→ Stable';
-                    }
-                    const trendColor = trend.startsWith('▲') ? '#15803d' : trend.startsWith('▼') ? '#dc2626' : '#888';
-
-                    const cells = allWS.map(ws => {
-                        // Avg rank cell
-                        const idx = weekStarts.indexOf(ws);
-                        const avg = idx >= 0 ? avgRanks[idx] : null;
-                        const c = rankColor(avg !== null ? Math.round(avg) : null);
-                        const rankCell = `<td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:center;${rowBg}">` +
-                            (avg !== null
-                                ? `<span style="background:${c.bg};color:${c.fg};padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;">#${avg.toFixed(1)}</span>`
-                                : '<span style="color:#ccc;font-size:12px;">—</span>') +
-                            '</td>';
-                        // Avg spend cell — average daily spend across BSR dates in this week
-                        let spendCell;
-                        if (!isSG) {
-                            spendCell = `<td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:center;background:#fafafa;"><span style="color:#ddd;font-size:11px;">N/A</span></td>`;
-                        } else {
-                            const weekDates = bsr.dates.filter(d => getWeekStart(d) === ws);
-                            const spendVals = weekDates.map(d => (productSpend && productSpend[d] !== undefined) ? productSpend[d] : null).filter(v => v !== null);
-                            const avgSpend = spendVals.length > 0 ? spendVals.reduce((a,b) => a+b, 0) / spendVals.length : null;
-                            spendCell = `<td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:center;background:${isSG?'#fffdf0':'#fafafa'};">` +
-                                (avgSpend !== null
-                                    ? `<span style="font-size:12px;font-weight:600;color:#b45309;">$${avgSpend.toLocaleString('en-US',{maximumFractionDigits:0})}</span>`
-                                    : '<span style="color:#ddd;font-size:11px;">—</span>') +
-                                '</td>';
+            charts.bsrOverlayChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'BSR Rank',
+                            data: rankData,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102,126,234,0.08)',
+                            borderWidth: 2.5,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            tension: 0.2,
+                            spanGaps: false,
+                            yAxisID: 'yRank'
+                        },
+                        {
+                            label: 'Ad Spend ($)',
+                            data: spendData,
+                            borderColor: '#f97316',
+                            backgroundColor: 'rgba(249,115,22,0.07)',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            tension: 0.2,
+                            spanGaps: false,
+                            yAxisID: 'ySpend'
                         }
-                        return rankCell + spendCell;
-                    }).join('');
-
-                    const tr = document.createElement('tr');
-                    if (isSG) tr.style.fontWeight = '600';
-                    tr.innerHTML = `
-                        <td style="${tdStyle}font-weight:${isSG?'700':'400'};color:${isSG?'#667eea':'#333'};">${isSG ? '⭐ ' : ''}${r.product}</td>
-                        <td style="${tdStyle}color:#888;font-size:12px;">${r.brand}</td>
-                        ${cells}
-                        <td style="${tdStyle}text-align:center;">${r.best !== null ? `<span style="font-weight:600;">#${r.best}</span>` : '—'}</td>
-                        <td style="${tdStyle}text-align:center;color:${trendColor};font-size:12px;">${trend}</td>
-                    `;
-                    tbd.appendChild(tr);
-                });
-                // Footnote for partial weeks
-                if (wkDataCounts.some(c => c < 7)) {
-                    const foot = document.createElement('tr');
-                    foot.innerHTML = `<td colspan="${3 + allWS.length * 2}" style="padding:8px 12px;font-size:11px;color:#aaa;font-style:italic;">* Partial week — fewer than 7 daily data points</td>`;
-                    tbd.appendChild(foot);
-                }
-            } else {
-                // ---- DAILY TABLE ----
-                const dateCols = bsr.dates.map(d => {
-                    const label = d.slice(5); // MM-DD
-                    return `<th style="${thStyle}">Rank<br><span style="font-size:10px;color:#999;">${label}</span></th>` +
-                           `<th style="${thSpendStyle}">Spend<br><span style="font-size:10px;color:#b45309;">${label}</span></th>`;
-                }).join('');
-                hdr.innerHTML = `<th style="${thStyle}text-align:left;">Product</th><th style="${thStyle}">Brand</th>` +
-                    dateCols +
-                    `<th style="${thStyle}">Best Rank</th><th style="${thStyle}">Latest Rank</th><th style="${thStyle}">Trend</th>`;
-
-                tbd.innerHTML = '';
-                // Sort by latest rank ascending (best rank = lowest number = top), nulls at bottom
-                const dailySortedRows = [...rows].sort((a, b) => {
-                    if (a.latest === null && b.latest === null) return 0;
-                    if (a.latest === null) return 1;
-                    if (b.latest === null) return -1;
-                    return a.latest - b.latest;
-                });
-                dailySortedRows.forEach(r => {
-                    const isSG = r.brand === 'Stargazer';
-                    const productSpend = spendLookup[r.product] || null;
-                    const trendRanks = r.ranks.filter(v => v !== null);
-                    let trend = '—';
-                    if (trendRanks.length >= 2) {
-                        const first = trendRanks[0], last = trendRanks[trendRanks.length-1];
-                        trend = last < first ? '▲ Improving' : last > first ? '▼ Declining' : '→ Stable';
-                    }
-                    const trendColor = trend.startsWith('▲') ? '#15803d' : trend.startsWith('▼') ? '#dc2626' : '#888';
-                    const rowBg = isSG ? 'background:#f5f7ff;' : '';
-                    const tdStyle = `padding:7px 12px;border-bottom:1px solid #f0f0f0;${rowBg}`;
-
-                    const cells = r.ranks.map((rank, i) => {
-                        const c = rankColor(rank);
-                        const rankCell = `<td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:center;${rowBg}">` +
-                            (rank !== null
-                                ? `<span style="background:${c.bg};color:${c.fg};padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;">#${rank}</span>`
-                                : '<span style="color:#ccc;font-size:12px;">—</span>') +
-                            '</td>';
-                        let spendContent;
-                        if (!isSG) {
-                            spendContent = '<span style="color:#ddd;font-size:11px;">N/A</span>';
-                        } else {
-                            const dateKey = bsr.dates[i];
-                            const spend = productSpend && productSpend[dateKey] !== undefined ? productSpend[dateKey] : null;
-                            if (spend !== null) {
-                                spendContent = `<span style="font-size:12px;font-weight:600;color:#b45309;">$${spend.toLocaleString('en-US',{maximumFractionDigits:0})}</span>`;
-                            } else {
-                                spendContent = '<span style="color:#d4a017;font-size:11px;font-style:italic;" title="Add March ads export to Data folder">pending</span>';
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: true, position: 'top', labels: { font: { size: 12 }, boxWidth: 16 } },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => {
+                                    if (ctx.dataset.yAxisID === 'yRank')
+                                        return `BSR Rank: ${ctx.raw !== null ? '#' + ctx.raw : 'Not ranked'}`;
+                                    return `Ad Spend: ${ctx.raw !== null ? '$' + Number(ctx.raw).toLocaleString('en-US', {maximumFractionDigits:2}) : '—'}`;
+                                }
                             }
                         }
-                        const spendCell = `<td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:center;background:${isSG?'#fffdf0':'#fafafa'};">` +
-                            spendContent + '</td>';
-                        return rankCell + spendCell;
-                    }).join('');
-
-                    const tr = document.createElement('tr');
-                    if (isSG) tr.style.fontWeight = '600';
-                    tr.innerHTML = `
-                        <td style="${tdStyle}font-weight:${isSG?'700':'400'};color:${isSG?'#667eea':'#333'};">${isSG ? '⭐ ' : ''}${r.product}</td>
-                        <td style="${tdStyle}color:#888;font-size:12px;">${r.brand}</td>
-                        ${cells}
-                        <td style="${tdStyle}text-align:center;">${r.best !== null ? `<span style="font-weight:600;">#${r.best}</span>` : '—'}</td>
-                        <td style="${tdStyle}text-align:center;">${r.latest !== null ? `<span style="font-weight:600;">#${r.latest}</span>` : '—'}</td>
-                        <td style="${tdStyle}text-align:center;color:${trendColor};font-size:12px;">${trend}</td>
-                    `;
-                    tbd.appendChild(tr);
-                });
-            }
+                    },
+                    scales: {
+                        yRank: {
+                            type: 'linear', position: 'left',
+                            reverse: true, min: 1, max: 30,
+                            title: { display: true, text: 'BSR Rank (lower = better)', color: '#667eea' },
+                            ticks: { color: '#667eea', stepSize: 5, callback: v => '#' + v },
+                            grid: { color: 'rgba(102,126,234,0.1)' }
+                        },
+                        ySpend: {
+                            type: 'linear', position: 'right',
+                            beginAtZero: true,
+                            title: { display: true, text: 'Daily Ad Spend ($)', color: '#f97316' },
+                            ticks: { color: '#f97316', callback: v => '$' + v.toLocaleString() },
+                            grid: { drawOnChartArea: false }
+                        },
+                        x: { title: { display: true, text: 'Date' }, ticks: { maxTicksLimit: 20 } }
+                    }
+                }
+            });
         }
 
         function renderStCharts(termAggArr) {
