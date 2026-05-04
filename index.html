@@ -576,7 +576,7 @@
     </div>
 
     <div class="mobile-nav-bar">
-        <select class="mobile-nav-select" id="mobileNavSelect" onchange="activateTab(this.value)">
+        <select class="mobile-nav-select" id="mobileNavSelect">
             <option value="overview">📊 Overview</option>
             <option value="annual-plan">📅 Annual Plan</option>
             <option value="business-performance">💼 Business Performance</option>
@@ -1737,6 +1737,9 @@
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', () => activateTab(tab.dataset.tab));
             });
+
+            const mobileNav = document.getElementById('mobileNavSelect');
+            if (mobileNav) mobileNav.addEventListener('change', (e) => activateTab(e.target.value));
 
             document.getElementById('startDate').addEventListener('change', renderDashboard);
             document.getElementById('endDate').addEventListener('change', renderDashboard);
