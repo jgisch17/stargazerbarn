@@ -130,7 +130,6 @@ All seven data arrays in `dashboard_data.js` plus the three intermediate CSVs:
 | `asin_performance` | SKU-level ad metrics merged with per-ASIN shipped revenue/COGS/units from sales CSV |
 | `daily_series` | Daily ad aggregates (spend, sales, clicks, impressions, purchases) — drives the Overview trend chart |
 | `weekly_series` | Same fields rolled up by week (Monday-start) — drives the Overview trend chart weekly view |
-| `bsr_spend_data` | Daily ad spend per BSR-tracked product — drives the spend overlay on the BSR Deep Dive chart |
 | `processed_ads_data.csv` | Raw ads rows appended with `Month_Period` and `Product Group` columns |
 | `processed_sales_data.csv` | Raw sales rows appended with `Month`, `Month_Name`, `Product Group`, `Month_Key` columns |
 | `monthly_performance.csv` | Product Group × Month rollup with TACoS, CAC, ROAS |
@@ -173,20 +172,6 @@ If a new ASIN appears, add it to ASIN_GROUP before running the ingest.
 - **Organic-only ASINs**: some ASINs have shipped revenue/COGS in the sales file but zero ad spend. These must still be added to `asin_performance` (with all ad metrics zeroed out) so that the Business Performance tab shows correct COGS and Revenue totals. After building `asin_performance` from the ads data, iterate the sales CSV and add any ASIN not already present as a zero-spend row with real shipped data.
 - **Annual Plan tab**: reads actuals from `time_series` dynamically for any `2026-XX` month present — no code changes needed when adding new months. The tab will automatically show and color-code each new month as its data lands in `time_series`.
 - **Overview trend chart**: uses `daily_series` (daily view), `weekly_series` (weekly view), and `time_series` (monthly view). All three must be updated each ingest or the chart will stop at the prior month. Build `daily_series` from the `Date` column in the raw ads file; roll up weekly from those daily rows.
-- **`bsr_spend_data` rebuild**: After updating `processed_ads_data.csv`, rebuild `bsr_spend_data` in full by reading all rows from `processed_ads_data.csv`, grouping by `(Advertised product ID, Date)`, summing `Total cost`, and mapping ASIN → BSR product name. Replace the entire `bsr_spend_data` value in `dashboard_data.js` (do not append — always rebuild from scratch so all months stay in sync). Dates in `processed_ads_data.csv` may be ISO (`2026-04-01`) or Amazon native (`Apr 01, 2026`) — parse both. The ASIN → BSR product name map is:
-
-  ```
-  B08BXRHRXV → Stargazer-Wildflower
-  B08BXRHRL8 → Stargazer-Pink/White Lilies
-  B08BXRQ4XM → Stargazer-Red Royale
-  B07YMKC6NF → Stargazer Barn - 15 stem Rainbow Tulips
-  B07MGJ266C → Stargazer Barn - 30 stem Rainbow Tulips
-  B07TRP9TVX → Stargazer-Pretty in Pink
-  B07SGR2K3Q → Stargazer-Sunrise Lilies
-  B07KWKGPKZ → Stargazer-Holiday Bouquet
-  ```
-
-  Only include days with spend > 0. Round values to 2 decimal places.
 
 ### After ingest — update default date range in index.html
 
