@@ -1710,30 +1710,30 @@
             });
         }
 
+        function activateTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            const tabEl = document.querySelector(`.tab[data-tab="${tabId}"]`);
+            if (tabEl) tabEl.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            const sel = document.getElementById('mobileNavSelect');
+            if (sel) sel.value = tabId;
+            if (tabId === 'annual-plan') { renderAnnualPlanTable(); renderAnnualPlanCharts(); }
+            if (tabId === 'dow-analysis') renderDowTab();
+            if (tabId === 'bsr-tracking') renderBSRTab();
+            if (tabId === 'sov-tracking') renderSOVTab();
+            if (tabId === 'insights') renderInsightsTab();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const btn = document.getElementById('sidebarShrinkBtn');
+            const shrunk = sidebar.classList.toggle('shrunk');
+            btn.textContent = shrunk ? '»' : '«';
+            btn.title = shrunk ? 'Expand sidebar' : 'Collapse sidebar';
+        }
+
         function setupEventListeners() {
-            function activateTab(tabId) {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                const tabEl = document.querySelector(`.tab[data-tab="${tabId}"]`);
-                if (tabEl) tabEl.classList.add('active');
-                document.getElementById(tabId).classList.add('active');
-                const sel = document.getElementById('mobileNavSelect');
-                if (sel) sel.value = tabId;
-                if (tabId === 'annual-plan') { renderAnnualPlanTable(); renderAnnualPlanCharts(); }
-                if (tabId === 'dow-analysis') renderDowTab();
-                if (tabId === 'bsr-tracking') renderBSRTab();
-                if (tabId === 'sov-tracking') renderSOVTab();
-                if (tabId === 'insights') renderInsightsTab();
-            }
-
-            function toggleSidebar() {
-                const sidebar = document.getElementById('sidebar');
-                const btn = document.getElementById('sidebarShrinkBtn');
-                const shrunk = sidebar.classList.toggle('shrunk');
-                btn.textContent = shrunk ? '»' : '«';
-                btn.title = shrunk ? 'Expand sidebar' : 'Collapse sidebar';
-            }
-
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', () => activateTab(tab.dataset.tab));
             });
