@@ -64,7 +64,18 @@ python3 scrape_bsr.py
 python3 bsr_updater.py '<json_of_ranks>'
 ```
 
-`bsr_updater.py` takes a JSON dict of `{product_name: rank_int_or_null}` for all tracked products and patches `dashboard_data.js`.
+`bsr_updater.py` takes a JSON dict of `{product_name: rank_int}` produced by `scrape_bsr.py` and patches `dashboard_data.js`.
+
+**What gets scraped each day:**
+- All known Stargazer ASINs (defined in `ASIN_TO_PRODUCT` in `scrape_bsr.py`) — tracked at whatever rank they appear, including outside top 30.
+- All top-30 items on the BSR page — for unknown ASINs, a product name is auto-derived from the Amazon listing title (brand extracted from known brand patterns; descriptor truncated to 35 chars).
+- New products are **auto-added** to `bsr_data.rankings` on first appearance — `bsr_updater.py` pads their historical ranks with null and adds them to the dashboard going forward.
+
+**Adding a new Stargazer ASIN:**
+Add it to `ASIN_TO_PRODUCT` in `scrape_bsr.py`. It will be auto-added to `bsr_data.rankings` on the next run — no manual dashboard edit needed.
+
+**If a new Stargazer ASIN shows up in top 30 but has no entry in ASIN_TO_PRODUCT:**
+It will be captured as an "unknown ASIN" with a title-derived name. After identifying it, add the ASIN to `ASIN_TO_PRODUCT` and rename the entry in `bsr_data.rankings` to match.
 
 ## Dashboard
 
@@ -133,6 +144,7 @@ All seven data arrays in `dashboard_data.js` plus the three intermediate CSVs:
 | `processed_ads_data.csv` | Raw ads rows appended with `Month_Period` and `Product Group` columns |
 | `processed_sales_data.csv` | Raw sales rows appended with `Month`, `Month_Name`, `Product Group`, `Month_Key` columns |
 | `monthly_performance.csv` | Product Group × Month rollup with TACoS, CAC, ROAS |
+| `bsr_spend_data` | **Also rebuilt every ingest** — per-ASIN daily spend map read from `processed_ads_data.csv`. Must be rebuilt after appending any new month so the BSR Rank + Ad Spend overlay chart stays current. See ASIN→product mapping below. |
 
 **`daily_series` / `weekly_series`**: built from the daily `Date` column in the raw ads CSV. Dates are parsed from Amazon's format (`Apr 01, 2026`) → ISO (`2026-04-01`). Weeks use Monday as the start day.
 
@@ -172,6 +184,18 @@ If a new ASIN appears, add it to ASIN_GROUP before running the ingest.
 - **Organic-only ASINs**: some ASINs have shipped revenue/COGS in the sales file but zero ad spend. These must still be added to `asin_performance` (with all ad metrics zeroed out) so that the Business Performance tab shows correct COGS and Revenue totals. After building `asin_performance` from the ads data, iterate the sales CSV and add any ASIN not already present as a zero-spend row with real shipped data.
 - **Annual Plan tab**: reads actuals from `time_series` dynamically for any `2026-XX` month present — no code changes needed when adding new months. The tab will automatically show and color-code each new month as its data lands in `time_series`.
 - **Overview trend chart**: uses `daily_series` (daily view), `weekly_series` (weekly view), and `time_series` (monthly view). All three must be updated each ingest or the chart will stop at the prior month. Build `daily_series` from the `Date` column in the raw ads file; roll up weekly from those daily rows.
+- **bsr_spend_data rebuild** (required after every ingest): After `processed_ads_data.csv` is updated, rebuild `bsr_spend_data` in `dashboard_data.js` by aggregating daily spend per Stargazer ASIN. Use this ASIN → BSR product name mapping:
+  ```
+  B08BXRHRXV → Stargazer-Wildflower
+  B08BXRHRL8 → Stargazer-Pink/White Lilies
+  B08BXRQ4XM → Stargazer-Red Royale
+  B07YMKC6NF → Stargazer Barn - 15 stem Rainbow Tulips
+  B07MGJ266C → Stargazer Barn - 30 stem Rainbow Tulips
+  B07TRP9TVX → Stargazer-Pretty in Pink
+  B07SGR2K3Q → Stargazer-Sunrise Lilies
+  B07KWKGPKZ → Stargazer-Holiday Bouquet
+  ```
+  Dates in the ads CSV come in two formats depending on the month ingested: ISO (`2025-11-01`) for older months, or Amazon native (`Apr 01, 2026`) for recent months — parse both to ISO before aggregating. The BSR overlay chart will only show spend for months present in `processed_ads_data.csv`; if a gap appears, the missing month's raw ads CSV needs to be ingested.
 
 ### After ingest — update default date range in index.html
 
