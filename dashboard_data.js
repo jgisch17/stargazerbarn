@@ -46,6 +46,23 @@
             });
             return { weekStarts, avgRanks };
         }
+        let bsrL15Mode = false;
+        function setBSRL15(on) {
+            bsrL15Mode = on;
+            const allBtn = document.getElementById('bsrAllBtn');
+            const l15Btn = document.getElementById('bsrL15Btn');
+            if (allBtn) {
+                allBtn.style.background = on ? '#fff' : '#667eea';
+                allBtn.style.color = on ? '#555' : '#fff';
+                allBtn.style.fontWeight = on ? '500' : '600';
+            }
+            if (l15Btn) {
+                l15Btn.style.background = on ? '#667eea' : '#fff';
+                l15Btn.style.color = on ? '#fff' : '#555';
+                l15Btn.style.fontWeight = on ? '600' : '500';
+            }
+            renderBSRTab();
+        }
         let currentDimension = 'daily';
         let selectedGroups = {
             campaign: ['all'],
