@@ -1010,6 +1010,11 @@
                     <button id="bsrRollupDaily" onclick="setBSRRollup(false)" style="padding:6px 16px; border:none; border-right:1px solid #ddd; font-size:13px; cursor:pointer; font-weight:600; background:#667eea; color:#fff;">Daily</button>
                     <button id="bsrRollupWeekly" onclick="setBSRRollup(true)" style="padding:6px 16px; border:none; font-size:13px; cursor:pointer; font-weight:500; background:#fff; color:#555;">Weekly</button>
                 </div>
+                <label style="margin-left:10px;">Range:</label>
+                <div style="display:inline-flex; border:1px solid #ddd; border-radius:6px; overflow:hidden;">
+                    <button id="bsrAllBtn" onclick="setBSRL15(false)" style="padding:6px 16px; border:none; border-right:1px solid #ddd; font-size:13px; cursor:pointer; font-weight:600; background:#667eea; color:#fff;">All</button>
+                    <button id="bsrL15Btn" onclick="setBSRL15(true)" style="padding:6px 16px; border:none; font-size:13px; cursor:pointer; font-weight:500; background:#fff; color:#555;">L15d</button>
+                </div>
                 <span style="margin-left:auto; font-size:12px; color:#888; align-self:center;">📉 Lower rank number = better position (Rank #1 is best)</span>
             </div>
 
@@ -4883,6 +4888,10 @@ function renderCampaignTargetingTab() {
             const view = document.getElementById('bsrView') ? document.getElementById('bsrView').value : 'stargazer';
             const chartMode = document.getElementById('bsrChartMode') ? document.getElementById('bsrChartMode').value : 'line';
 
+            // L15d range filter — slices chart dates/ranks to last 15 days
+            const l15Offset = bsrL15Mode ? Math.max(0, bsr.dates.length - 15) : 0;
+            const chartDates = bsrL15Mode ? bsr.dates.slice(-15) : bsr.dates;
+
             // Filter rankings
             let rows = bsr.rankings;
             if (view === 'stargazer')    rows = rows.filter(r => r.brand === 'Stargazer');
@@ -4919,12 +4928,12 @@ function renderCampaignTargetingTab() {
             if (charts.bsrChart) charts.bsrChart.destroy();
             let sgIdx = 0;
 
-            // Build weekly or daily labels/data for chart
+            // Build weekly or daily labels/data for chart (respects L15d filter via chartDates/l15Offset)
             const allWeekStarts = bsrRollupMode ? (() => {
-                const ws = new Set(bsr.dates.map(d => getWeekStart(d)));
+                const ws = new Set(chartDates.map(d => getWeekStart(d)));
                 return [...ws].sort();
             })() : null;
-            const chartLabels = bsrRollupMode ? allWeekStarts.map(weekLabel) : bsr.dates;
+            const chartLabels = bsrRollupMode ? allWeekStarts.map(weekLabel) : chartDates;
 
             if (chartMode === 'line') {
                 const datasets = rows.map(r => {
@@ -4932,13 +4941,13 @@ function renderCampaignTargetingTab() {
                     const color = isSG ? stargazerColors[sgIdx++ % stargazerColors.length] : compColor;
                     let dataPoints;
                     if (bsrRollupMode) {
-                        const { weekStarts, avgRanks } = buildWeeklyData(bsr.dates, r.ranks);
+                        const { weekStarts, avgRanks } = buildWeeklyData(chartDates, r.ranks.slice(l15Offset));
                         dataPoints = allWeekStarts.map(ws => {
                             const idx = weekStarts.indexOf(ws);
                             return idx >= 0 ? avgRanks[idx] : null;
                         });
                     } else {
-                        dataPoints = r.ranks;
+                        dataPoints = r.ranks.slice(l15Offset);
                     }
                     return {
                         label: r.product,
