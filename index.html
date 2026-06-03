@@ -2760,14 +2760,21 @@ function renderCampaignTargetingTab() {
                 if (!a) { out += blankCell(); continue; }
                 var v = a['Shipped COGS'] || 0;
                 actSalesTotal += v;
-                if (Math.abs(v - planPcogs[m]) <= 5000) {
+                var shortfall = planPcogs[m] - v;
+                if (v >= planPcogs[m]) {
+                    out += actualCell(fmtMoney(v), true);
+                } else if (shortfall <= 5000) {
                     out += warnCell(fmtMoney(v));
                 } else {
-                    out += actualCell(fmtMoney(v), v >= planPcogs[m]);
+                    out += actualCell(fmtMoney(v), false);
                 }
             }
-            var cogsClose = actSalesTotal > 0 && Math.abs(actSalesTotal - totalPcogs) <= 5000;
-            out += (actSalesTotal > 0 ? (cogsClose ? warnCell(fmtMoney(actSalesTotal)) : actualCell(fmtMoney(actSalesTotal), actSalesTotal >= totalPcogs)) : blankCell()) + '</tr>';
+            var totalShortfall = totalPcogs - actSalesTotal;
+            var cogsCell = actSalesTotal <= 0 ? blankCell()
+                         : actSalesTotal >= totalPcogs ? actualCell(fmtMoney(actSalesTotal), true)
+                         : totalShortfall <= 5000 ? warnCell(fmtMoney(actSalesTotal))
+                         : actualCell(fmtMoney(actSalesTotal), false);
+            out += cogsCell + '</tr>';
 
             out += '<tr>';
             out += '<td style="' + TDL + '">Total Ordered Revenue (Actual)</td>';
