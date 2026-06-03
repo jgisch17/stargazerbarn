@@ -1845,10 +1845,11 @@
                     
                     // Handle month format (YYYY-MM) vs date format (YYYY-MM-DD)
                     if (date.length === 7) {
-                        // Month format - check if month falls within range
-                        const monthStart = date + '-01';
-                        const monthEnd = date + '-31';
-                        return monthStart <= end && monthEnd >= start;
+                        // Use the 1st of the month as the anchor so that a prior period
+                        // like "Mar 31 – Apr 30" only matches April (Apr-01 is in range)
+                        // and not March (Mar-01 is before Mar-31).
+                        const monthFirst = date + '-01';
+                        return monthFirst >= start && monthFirst <= end;
                     }
                     return date >= start && date <= end;
                 });
