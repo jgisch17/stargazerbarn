@@ -166,12 +166,59 @@ B08BXRQ4XM → Roses        B08LRB7B46 → Roses
 
 If a new ASIN appears, add it to ASIN_GROUP before running the ingest.
 
+### dashboard_data.js file structure — read this before writing the ingest script
+
+**Do not use the Read tool on this file** — it is ~1MB in ~74 lines and will exceed token limits. Use Python via Bash only.
+
+The file has two top-level **unquoted** JavaScript keys (not JSON — no quotes around the key names):
+```
+const dashboardData = {
+    bsr_spend_data: { "Product Name": { "YYYY-MM-DD": spend, ... }, ... },
+    bsr_data: { ... all dashboard data arrays as nested quoted JSON ... }
+}
+```
+
+Key structural facts:
+- `bsr_spend_data:` — unquoted JS key. Value is a plain `{}` object (not an array). To locate and parse it, search for the literal string `bsr_spend_data:` (no quotes).
+- `bsr_data:` — also unquoted JS key, but **this object contains all the data arrays** (`campaign_data`, `sku_data`, `search_term_data`, `time_series`, `asin_performance`, `daily_series`, `weekly_series`, `monthly_performance`, `total_sales`). These inner keys ARE quoted in JSON format, so `content.find('"campaign_data":')` works correctly for them.
+- To extract any array by key, use a bracket-depth counter in Python — `json.loads` on the whole file will fail because of the unquoted top-level JS keys.
+
+**Python pattern to extract/replace any array (works for all inner arrays):**
+```python
+def find_array_bounds(content, key):
+    idx = content.find(f'"{key}":')
+    start = idx + len(f'"{key}":')
+    depth = 0
+    for i in range(start, len(content)):
+        if content[i] in '[{': depth += 1
+        elif content[i] in ']}':
+            depth -= 1
+            if depth == 0: return start, i
+    raise ValueError(key)
+
+def load_array(content, key):
+    s, e = find_array_bounds(content, key)
+    return json.loads(content[s:e+1])
+
+def replace_array(content, key, new_arr):
+    s, e = find_array_bounds(content, key)
+    return content[:s] + json.dumps(new_arr, separators=(',',':')) + content[e+1:]
+```
+
+**For `bsr_spend_data` specifically** (unquoted key), use a different search:
+```python
+bsr_key = 'bsr_spend_data:'
+bsr_start = content.find(bsr_key) + len(bsr_key)
+# then use bracket-depth counter from bsr_start
+```
+
 ### How to run the ingest (run inline Python — no saved script needed)
 
 1. Place both raw export files in `~/Downloads/` (or note their actual paths).
 2. Open a Claude session in this project directory.
-3. Tell Claude: *"Here are the two new files for [Month] data: [ads path] [sales path]. Please ingest as you always do to update all data."*
+3. Tell Claude: *"The two new files for [Month] are in Downloads. Please ingest."*
 4. Claude will run the ingest inline, verify the summary numbers, update all arrays in `dashboard_data.js` and the three intermediate CSVs, then push to GitHub.
+5. **Approve all bash commands upfront** — the ingest script is a single Python run; the only prompts are for bash execution.
 
 ### Key ingest logic
 
