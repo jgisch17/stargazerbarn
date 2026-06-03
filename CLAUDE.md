@@ -242,3 +242,17 @@ curl -s -o /tmp/github_response.json -w "%{http_code}" \
 - BSR and SOV data accumulate daily; rerunning on the same date overwrites that day's entry
 - Raw CSV/XLSX files are source data; never delete them
 - The `search_term_data` array is intentionally capped at top 50 terms per month by spend — this keeps `dashboard_data.js` under 1 MB. The backup `.bak` file always holds the previous state.
+
+## Superpowers & Skills
+
+Always use the Skill tool for the following before reporting work complete:
+
+| Situation | Skill to invoke |
+|-----------|----------------|
+| After any data ingest or dashboard update | `verify` — open the dashboard in a real browser and confirm numbers match expected values before pushing to GitHub |
+| Bugs or unexpected data | `investigate` |
+| Reviewing code/script changes | `review` |
+| Pushing live | `ship` or confirm via `verify` first |
+
+**Dashboard password:** stored separately — ask the user if needed.
+**Key rule:** never push to GitHub and declare "done" without first running `verify` to confirm the live dashboard shows accurate data.
