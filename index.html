@@ -992,6 +992,14 @@
 
         <!-- BSR Tracking Tab -->
         <div id="bsr-tracking" class="tab-content">
+            <!-- Category Toggle -->
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                <label style="font-size:13px; color:#555;">Category:</label>
+                <div style="display:inline-flex; border:1px solid #ddd; border-radius:6px; overflow:hidden;">
+                    <button id="bsrCatFlowers" onclick="setBSRCategory('flowers')" style="padding:6px 16px; border:none; border-right:1px solid #ddd; font-size:13px; cursor:pointer; font-weight:600; background:#667eea; color:#fff;">Fresh Flowers</button>
+                    <button id="bsrCatRoses" onclick="setBSRCategory('roses')" style="padding:6px 16px; border:none; font-size:13px; cursor:pointer; font-weight:500; background:#fff; color:#555;">Roses</button>
+                </div>
+            </div>
             <!-- Filters -->
             <div class="tab-filters" style="flex-wrap:wrap; gap:10px;">
                 <label>View:</label>
@@ -4896,9 +4904,49 @@ function renderCampaignTargetingTab() {
             });
         }
 
+        // ── BSR state ────────────────────────────────────────────────────
+        let bsrL15Mode = false;
+        let bsrRollupMode = false;
+        let bsrCategory = 'flowers';
+
+        function setBSRL15(v) {
+            bsrL15Mode = v;
+            const allBtn = document.getElementById('bsrAllBtn');
+            const l15Btn = document.getElementById('bsrL15Btn');
+            if (allBtn) { allBtn.style.background = v ? '#fff' : '#667eea'; allBtn.style.color = v ? '#555' : '#fff'; }
+            if (l15Btn) { l15Btn.style.background = v ? '#667eea' : '#fff'; l15Btn.style.color = v ? '#fff' : '#555'; }
+            renderBSRTab();
+        }
+
+        function setBSRRollup(v) {
+            bsrRollupMode = v;
+            const dailyBtn = document.getElementById('bsrRollupDaily');
+            const weeklyBtn = document.getElementById('bsrRollupWeekly');
+            if (dailyBtn) { dailyBtn.style.background = v ? '#fff' : '#667eea'; dailyBtn.style.color = v ? '#555' : '#fff'; }
+            if (weeklyBtn) { weeklyBtn.style.background = v ? '#667eea' : '#fff'; weeklyBtn.style.color = v ? '#fff' : '#555'; }
+            renderBSRTab();
+        }
+
+        function setBSRCategory(cat) {
+            bsrCategory = cat;
+            const flowersBtn = document.getElementById('bsrCatFlowers');
+            const rosesBtn = document.getElementById('bsrCatRoses');
+            if (flowersBtn) { flowersBtn.style.background = cat === 'flowers' ? '#667eea' : '#fff'; flowersBtn.style.color = cat === 'flowers' ? '#fff' : '#555'; }
+            if (rosesBtn) { rosesBtn.style.background = cat === 'roses' ? '#667eea' : '#fff'; rosesBtn.style.color = cat === 'roses' ? '#fff' : '#555'; }
+            bsrL15Mode = false;
+            const allBtn = document.getElementById('bsrAllBtn');
+            const l15Btn = document.getElementById('bsrL15Btn');
+            if (allBtn) { allBtn.style.background = '#667eea'; allBtn.style.color = '#fff'; }
+            if (l15Btn) { l15Btn.style.background = '#fff'; l15Btn.style.color = '#555'; }
+            renderBSRTab();
+        }
+
         function renderBSRTab() {
-            const bsr = dashboardData.bsr_data;
-            if (!bsr) return;
+            const bsr = bsrCategory === 'roses'
+                ? dashboardData.roses_bsr_data
+                : dashboardData.bsr_data;
+            if (!bsr || !bsr.dates) return;
+            const topN = bsrCategory === 'roses' ? 50 : 30;
             const view = document.getElementById('bsrView') ? document.getElementById('bsrView').value : 'stargazer';
             const chartMode = document.getElementById('bsrChartMode') ? document.getElementById('bsrChartMode').value : 'line';
 
@@ -4930,9 +4978,9 @@ function renderCampaignTargetingTab() {
                 const ss = 'font-size:11px;color:#aaa;margin-top:2px;';
                 tiles.innerHTML = `
                     <div style="${ks}"><div style="${ls}">Dates Tracked</div><div style="${vs}">${bsr.dates.length}</div><div style="${ss}">${bsr.dates[0]} → ${lastDate}</div></div>
-                    <div style="${ks}"><div style="${ls}">Stargazer SKUs</div><div style="${vs}">${sgRows.length}</div><div style="${ss}">${sgInTop30Latest} in Top 30 today</div></div>
+                    <div style="${ks}"><div style="${ls}">Stargazer SKUs</div><div style="${vs}">${sgRows.length}</div><div style="${ss}">${sgInTop30Latest} in Top ${topN} today</div></div>
                     <div style="${ks}"><div style="${ls}">Best Rank Today</div><div style="${vs};color:#15803d;">#${topRankLatest !== null ? topRankLatest : '—'}</div><div style="${ss}">${topProdLatest ? topProdLatest.product.replace('Stargazer-','').replace('Stargazer Barn - ','') : ''}</div></div>
-                    <div style="${ks}"><div style="${ls}">Total Competitors</div><div style="${vs}">${bsr.rankings.filter(r=>r.brand!=='Stargazer').length}</div><div style="${ss}">brands tracked in Top 30</div></div>
+                    <div style="${ks}"><div style="${ls}">Total Competitors</div><div style="${vs}">${bsr.rankings.filter(r=>r.brand!=='Stargazer').length}</div><div style="${ss}">brands tracked in Top ${topN}</div></div>
                     <div style="${ks}"><div style="${ls}">Category Leader</div><div style="${vs};font-size:16px;">${bsr.rankings.find(r=>r.ranks[lastIdx]===1) ? bsr.rankings.find(r=>r.ranks[lastIdx]===1).product.split('-')[0] : '—'}</div><div style="${ss}">${bsr.rankings.find(r=>r.ranks[lastIdx]===1) ? bsr.rankings.find(r=>r.ranks[lastIdx]===1).product : ''}</div></div>
                 `;
             }
@@ -5007,7 +5055,7 @@ function renderCampaignTargetingTab() {
                         },
                         scales: {
                             y: {
-                                reverse: true, min: 1, max: 30,
+                                reverse: true, min: 1, max: topN,
                                 title: { display: true, text: bsrRollupMode ? 'Avg BSR Rank (lower = better)' : 'BSR Rank (lower = better)' },
                                 ticks: { stepSize: 5, callback: v => '#' + v }
                             },
@@ -5048,7 +5096,7 @@ function renderCampaignTargetingTab() {
                             tooltip: { callbacks: { label: ctx => `${bsrRollupMode ? 'Avg Rank' : 'Rank'} #${ctx.raw}` } }
                         },
                         scales: {
-                            x: { reverse: true, min: 0, max: 31, title: { display: true, text: bsrRollupMode ? 'Avg BSR Rank (lower = better)' : 'BSR Rank (lower = better)' }, ticks: { callback: v => v > 0 ? '#'+v : '' } },
+                            x: { reverse: true, min: 0, max: topN + 1, title: { display: true, text: bsrRollupMode ? 'Avg BSR Rank (lower = better)' : 'BSR Rank (lower = better)' }, ticks: { callback: v => v > 0 ? '#'+v : '' } },
                             y: { ticks: { font: { size: 11 } } }
                         }
                     }
