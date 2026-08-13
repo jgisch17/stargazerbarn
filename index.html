@@ -590,6 +590,7 @@
             <option value="bsr-tracking">📈 BSR Tracking</option>
             <option value="sov-tracking">👁️ SOV Tracking</option>
             <option value="price-tracking">🏷️ Price Tracking</option>
+            <option value="rating-tracking">⭐ Star Ratings</option>
         </select>
     </div>
 
@@ -622,6 +623,7 @@
             <div class="tab" data-tab="bsr-tracking"><span class="tab-icon">📈</span><span class="tab-label">BSR Tracking</span></div>
             <div class="tab" data-tab="sov-tracking"><span class="tab-icon">👁️</span><span class="tab-label">SOV Tracking</span></div>
             <div class="tab" data-tab="price-tracking"><span class="tab-icon">🏷️</span><span class="tab-label">Price Tracking</span></div>
+            <div class="tab" data-tab="rating-tracking"><span class="tab-icon">⭐</span><span class="tab-label">Star Ratings</span></div>
         </div>
     </nav>
 
@@ -1127,6 +1129,48 @@
                 <div style="font-size:48px;">🚧</div>
                 <div style="font-size:22px; font-weight:600; color:#555;">Under Construction</div>
                 <div style="font-size:14px;">Price Tracking coming soon.</div>
+            </div>
+        </div>
+
+        <!-- Star Ratings Tab -->
+        <div id="rating-tracking" class="tab-content">
+            <!-- Filters -->
+            <div class="tab-filters" style="flex-wrap:wrap; gap:10px;">
+                <label>Product:</label>
+                <select id="ratingProductFilter" onchange="renderRatingTab()" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:13px; min-width:280px;">
+                    <option value="__all__">All Products</option>
+                </select>
+                <span style="margin-left:auto; font-size:12px; color:#888; align-self:center;">⭐ Scraped every Monday from each ASIN's Amazon listing</span>
+            </div>
+
+            <!-- KPI Tiles -->
+            <div id="ratingKpiTiles" style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;"></div>
+
+            <!-- Chart -->
+            <div class="chart-container" style="padding:20px; margin-bottom:24px;">
+                <div class="chart-title" id="ratingChartTitle">⭐ Star Rating Over Time</div>
+                <div style="position:relative; height:380px;">
+                    <canvas id="ratingChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="chart-container" style="padding:20px;">
+                <div class="chart-title">📋 Current Ratings by ASIN</div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table" id="ratingTable">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;">Product</th>
+                                <th style="text-align:left;">ASIN</th>
+                                <th style="text-align:center;">Rating</th>
+                                <th style="text-align:center;">Prior Week</th>
+                                <th style="text-align:center;">Change</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ratingTableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1732,6 +1776,7 @@
             if (tabId === 'bsr-tracking') renderBSRTab();
             if (tabId === 'sov-tracking') renderSOVTab();
             if (tabId === 'insights') renderInsightsTab();
+            if (tabId === 'rating-tracking') renderRatingTab();
         }
 
         function toggleSidebar() {
@@ -5206,6 +5251,136 @@ function renderCampaignTargetingTab() {
                     }
                 }
             });
+        }
+
+        function renderRatingTab() {
+            const rd = dashboardData.rating_data;
+            const tiles = document.getElementById('ratingKpiTiles');
+            const tbody = document.getElementById('ratingTableBody');
+            if (!rd || !rd.dates || rd.dates.length === 0) {
+                if (tiles) tiles.innerHTML = '<div style="color:#999;padding:12px;">No rating data yet.</div>';
+                if (tbody) tbody.innerHTML = '';
+                return;
+            }
+
+            const lastIdx = rd.dates.length - 1;
+            const prevIdx = lastIdx > 0 ? lastIdx - 1 : null;
+
+            // ---- Product filter (populate once) ----
+            const filter = document.getElementById('ratingProductFilter');
+            if (filter && !filter.dataset.populated) {
+                const opts = [...rd.products]
+                    .sort((a, b) => a.product.localeCompare(b.product))
+                    .map(p => `<option value="${p.asin}">${p.product}</option>`).join('');
+                filter.innerHTML = '<option value="__all__">All Products</option>' + opts;
+                filter.dataset.populated = '1';
+            }
+            const selected = filter ? filter.value : '__all__';
+
+            // ---- KPI tiles ----
+            const latestVals = rd.products.map(p => p.ratings[lastIdx]).filter(v => v !== null && v !== undefined);
+            const avg = latestVals.length ? latestVals.reduce((a, b) => a + b, 0) / latestVals.length : null;
+            const best = latestVals.length ? Math.max(...latestVals) : null;
+            const worst = latestVals.length ? Math.min(...latestVals) : null;
+            const bestProd = best !== null ? rd.products.find(p => p.ratings[lastIdx] === best) : null;
+            const worstProd = worst !== null ? rd.products.find(p => p.ratings[lastIdx] === worst) : null;
+            const below4 = latestVals.filter(v => v < 4.0).length;
+
+            if (tiles) {
+                const ks = 'flex:1;min-width:150px;background:#fff;border-radius:10px;padding:14px 18px;box-shadow:0 1px 6px rgba(0,0,0,0.08);';
+                const ls = 'font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;';
+                const vs = 'font-size:22px;font-weight:700;color:#333;';
+                const ss = 'font-size:11px;color:#aaa;margin-top:2px;';
+                tiles.innerHTML = `
+                    <div style="${ks}"><div style="${ls}">Weeks Tracked</div><div style="${vs}">${rd.dates.length}</div><div style="${ss}">${rd.dates[0]} → ${rd.dates[lastIdx]}</div></div>
+                    <div style="${ks}"><div style="${ls}">Average Rating</div><div style="${vs}">${avg !== null ? avg.toFixed(2) : '—'}</div><div style="${ss}">across ${latestVals.length} ASINs</div></div>
+                    <div style="${ks}"><div style="${ls}">Highest Rated</div><div style="${vs};color:#15803d;">${best !== null ? best.toFixed(1) : '—'}</div><div style="${ss}">${bestProd ? bestProd.product : ''}</div></div>
+                    <div style="${ks}"><div style="${ls}">Lowest Rated</div><div style="${vs};color:#dc2626;">${worst !== null ? worst.toFixed(1) : '—'}</div><div style="${ss}">${worstProd ? worstProd.product : ''}</div></div>
+                    <div style="${ks}"><div style="${ls}">Below 4.0 Stars</div><div style="${vs}">${below4}</div><div style="${ss}">ASINs needing attention</div></div>
+                `;
+            }
+
+            // ---- Chart ----
+            const rows = selected === '__all__'
+                ? rd.products
+                : rd.products.filter(p => p.asin === selected);
+
+            const palette = ['#182840','#e85d9f','#ef4444','#f97316','#eab308','#a88858','#06b6d4',
+                             '#8b5cf6','#10b981','#3b82f6','#f43f5e','#84cc16','#14b8a6','#d946ef'];
+            const datasets = rows.map((p, i) => {
+                const color = palette[i % palette.length];
+                return {
+                    label: p.product,
+                    data: p.ratings,
+                    borderColor: color,
+                    backgroundColor: color,
+                    borderWidth: selected === '__all__' ? 2 : 3,
+                    pointRadius: selected === '__all__' ? 3 : 5,
+                    pointHoverRadius: 7,
+                    tension: 0.2,
+                    spanGaps: false
+                };
+            });
+
+            const title = document.getElementById('ratingChartTitle');
+            if (title) {
+                title.textContent = selected === '__all__'
+                    ? '⭐ Star Rating Over Time — All Products'
+                    : '⭐ Star Rating Over Time — ' + (rows[0] ? rows[0].product : '');
+            }
+
+            const ctx = document.getElementById('ratingChart');
+            if (charts.ratingChart) charts.ratingChart.destroy();
+            charts.ratingChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: rd.dates, datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'right', labels: { font: { size: 11 }, boxWidth: 16 } },
+                        tooltip: {
+                            callbacks: {
+                                label: c => `${c.dataset.label}: ${c.raw !== null ? c.raw.toFixed(1) + ' ★' : 'No data'}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 3.0, max: 5.0,
+                            title: { display: true, text: 'Star Rating' },
+                            ticks: { stepSize: 0.2, callback: v => v.toFixed(1) }
+                        },
+                        x: { title: { display: true, text: 'Week Of' } }
+                    }
+                }
+            });
+
+            // ---- Table ----
+            if (tbody) {
+                tbody.innerHTML = [...rd.products]
+                    .sort((a, b) => a.product.localeCompare(b.product))
+                    .map(p => {
+                        const cur = p.ratings[lastIdx];
+                        const prev = prevIdx !== null ? p.ratings[prevIdx] : null;
+                        const curStr = cur !== null && cur !== undefined ? cur.toFixed(1) : '—';
+                        const prevStr = prev !== null && prev !== undefined ? prev.toFixed(1) : '—';
+                        let change = '—', color = '#999';
+                        if (cur !== null && cur !== undefined && prev !== null && prev !== undefined) {
+                            const d = Math.round((cur - prev) * 10) / 10;
+                            if (d > 0)      { change = '▲ +' + d.toFixed(1); color = '#15803d'; }
+                            else if (d < 0) { change = '▼ ' + d.toFixed(1);  color = '#dc2626'; }
+                            else            { change = '— 0.0';               color = '#999';    }
+                        }
+                        const curColor = cur !== null && cur !== undefined && cur < 4.0 ? '#dc2626' : '#333';
+                        return `<tr>
+                            <td style="text-align:left;">${p.product}</td>
+                            <td style="text-align:left;font-family:monospace;font-size:12px;color:#666;">${p.asin}</td>
+                            <td style="text-align:center;font-weight:700;color:${curColor};">${curStr}</td>
+                            <td style="text-align:center;color:#666;">${prevStr}</td>
+                            <td style="text-align:center;font-weight:600;color:${color};">${change}</td>
+                        </tr>`;
+                    }).join('');
+            }
         }
 
         function renderStCharts(termAggArr) {
