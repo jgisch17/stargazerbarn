@@ -1898,20 +1898,25 @@
             else if (context === 'cac') renderCACScatterChart();
         }
 
+        // Comparison data is monthly, so compare against the same number of calendar
+        // months immediately before the selection (Oct → Sep, Jul–Sep → Apr–Jun).
+        // A rolling N-day window spilled into an extra month whenever a 31-day month
+        // followed a 30-day one (Oct vs Aug 31–Sep 30 pulled in all of August).
         function getPreviousPeriod(startDate, endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            const daysDiff = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            const [sy, sm] = startDate.split('-').map(Number);
+            const [ey, em] = endDate.split('-').map(Number);
+            const months = (ey * 12 + em) - (sy * 12 + sm) + 1;
 
-            const prevEnd = new Date(start);
-            prevEnd.setDate(prevEnd.getDate() - 1);
-
-            const prevStart = new Date(prevEnd);
-            prevStart.setDate(prevStart.getDate() - daysDiff + 1);
+            const pad = n => String(n).padStart(2, '0');
+            const prevEndIdx   = sy * 12 + (sm - 1) - 1;   // month before the start month (0-based)
+            const prevStartIdx = prevEndIdx - months + 1;
+            const pey = Math.floor(prevEndIdx / 12),   pem = prevEndIdx % 12 + 1;
+            const psy = Math.floor(prevStartIdx / 12), psm = prevStartIdx % 12 + 1;
+            const lastDay = new Date(pey, pem, 0).getDate();
 
             return {
-                start: prevStart.toISOString().split('T')[0],
-                end: prevEnd.toISOString().split('T')[0]
+                start: `${psy}-${pad(psm)}-01`,
+                end:   `${pey}-${pad(pem)}-${pad(lastDay)}`
             };
         }
 
